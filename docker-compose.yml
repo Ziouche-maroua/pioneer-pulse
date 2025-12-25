@@ -1,0 +1,24 @@
+services:
+  write-db:
+    image: postgres:15-alpine
+    container_name: pioneerpulse-write-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: writeuser
+      POSTGRES_PASSWORD: writepass
+      POSTGRES_DB: pioneerpulse_write
+    ports:
+      - "5433:5432"
+    volumes:
+      - write-data:/var/lib/postgresql/data
+      - ./database/init/01-write-schema.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U writeuser"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+volumes:
+  write-data:
+  
