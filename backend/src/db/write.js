@@ -1,7 +1,7 @@
 const { Pool } = require("pg");
 require("dotenv").config();
 
-const pool = new Pool({
+const writePool = new Pool({
   host: process.env.WRITE_DB_HOST,
   port: process.env.WRITE_DB_PORT,
   user: process.env.WRITE_DB_USER,
@@ -9,8 +9,8 @@ const pool = new Pool({
   database: process.env.WRITE_DB_NAME,
 });
 
-pool.on("connect", () => {
-  console.log("✅ Connected to PostgreSQL");
+writePool.on("connect", () => {
+  console.log("✅ Connected to Write DB");
 });
 
-module.exports = pool;
+module.exports = writePool;

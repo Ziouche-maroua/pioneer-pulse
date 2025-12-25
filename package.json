@@ -1,0 +1,28 @@
+{
+  "name": "pioneer-pulse",
+  "version": "1.0.0",
+  "description": "PioneerPulse is a lightweight, open-source distributed system monitoring platform inspired by tools like Grafana.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ziouche-maroua/pioneer-pulse.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ziouche-maroua/pioneer-pulse/issues"
+  },
+  "homepage": "https://github.com/Ziouche-maroua/pioneer-pulse#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "pg": "^8.16.3"
+  }
+}
