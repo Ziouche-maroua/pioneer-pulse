@@ -1,5 +1,5 @@
-const pool = require("../db");
-
+let  writePool  = require("../db/write.js"); 
+ 
 async function createMetric(req, res) {
   const { service, cpu, memory } = req.body;
 
@@ -9,7 +9,7 @@ async function createMetric(req, res) {
 
   try {
     // Ensure service exists (or create it)
-    const serviceResult = await pool.query(
+    const serviceResult = await writePool.query(
       "INSERT INTO services (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id",
       [service]
     );
@@ -17,7 +17,7 @@ async function createMetric(req, res) {
     const serviceId = serviceResult.rows[0].id;
 
     //  Insert metric
-    await pool.query(
+    await writePool.query(
       "INSERT INTO metrics (service_id, cpu_usage, memory_usage) VALUES ($1, $2, $3)",
       [serviceId, cpu, memory]
     );

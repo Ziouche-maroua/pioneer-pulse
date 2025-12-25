@@ -1,5 +1,6 @@
 const express = require("express");
 const { createMetric } = require("./commands/metrics.command");
+const getDashboard = require("./queries/getDashboard");
 
 const app = express();
 
@@ -11,5 +12,8 @@ app.get("/health", (req, res) => {
 
 // Command  (WRITE)
 app.post("/metrics", createMetric);
+
+// Query  (READ)
+app.get("/dashboard", getDashboard);
 
 module.exports = app;
