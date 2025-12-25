@@ -1,0 +1,58 @@
+flowchart LR
+
+    %% PRODUCERS
+    subgraph Producers["Monitored Servers"]
+        AgentA["Producer Agent"]
+       
+    end
+
+    %% BACKEND
+    subgraph Backend["PioneerPulse Backend (Single App)"]
+        API["API Layer"]
+
+        subgraph CommandSide["Command Side (WRITE)"]
+            CmdHandler["Command Handlers"]
+            EventEmitter["Event Creator"]
+        end
+
+        subgraph QuerySide["Query Side (READ)"]
+            QueryHandler["Query Handlers"]
+        end
+    end
+
+    %% WRITE DB
+    subgraph WriteDB["Write Database (Source of Truth)"]
+        Services["services"]
+        Metrics["metrics"]
+        Events["events"]
+    end
+
+    %% READ DB
+    subgraph ReadDB["Read Database (Replica / Projections)"]
+        ServiceStatus["service_status"]
+        MetricsHourly["metrics_hourly"]
+        DashboardView["dashboard_metrics"]
+    end
+
+    %% FUTURE
+    subgraph Future["Future Alerting"]
+        AlertRules["alert_rules"]
+        Alerts["alerts"]
+    end
+
+    %% FLOWS
+    AgentA -->|POST metrics| API
+
+
+    API --> CmdHandler
+    CmdHandler --> Metrics
+    Metrics --> Services
+    CmdHandler --> EventEmitter
+    EventEmitter --> Events
+
+    Events -->|Sync / Projection| ServiceStatus
+    Events -->|Aggregation| MetricsHourly
+    Events --> DashboardView
+
+    QueryHandler --> ReadDB
+    AlertRules -.-> Alerts
