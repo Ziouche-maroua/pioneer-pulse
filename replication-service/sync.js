@@ -325,9 +325,7 @@ async function gracefulShutdown() {
 process.on("SIGINT", gracefulShutdown);
 process.on("SIGTERM", gracefulShutdown);
 
-// ============================================================================
 // START REPLICATION SERVICE
-// ============================================================================
 
 async function start() {
   console.log(" Starting PioneerPulse Replication Service...");
