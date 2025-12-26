@@ -1,0 +1,32 @@
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 120
+      arrivalRate: 100
+      name: "Realistic mixed traffic - 100 req/sec"
+    - duration: 60
+      arrivalRate: 200
+      name: "Peak hours - 200 req/sec"
+
+scenarios:
+  # 90% reads
+  - name: "Read operations"
+    weight: 90
+    flow:
+      - get:
+          url: "http://localhost:3001/api/queries/dashboard"
+      - think: 0.5
+      - get:
+          url: "http://localhost:3001/api/queries/services/{{ $randomNumber(1, 5) }}/metrics"
+  
+  # 10% writes
+  - name: "Write operations"
+    weight: 10
+    flow:
+      - post:
+          url: "http://localhost:3000/api/commands/metrics"
+          json:
+            service_id: "{{ $randomNumber(1, 5) }}"
+            metric_type: "{{ $randomString(5) }}"
+            value: "{{ $randomNumber(10, 100) }}"
