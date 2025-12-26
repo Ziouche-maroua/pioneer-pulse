@@ -1,0 +1,14 @@
+{
+  "name": "pioneerpulse-scripts",
+  "version": "1.0.0",
+  "description": "Testing and monitoring scripts",
+  "scripts": {
+    "seed": "node seed-data.js seed",
+    "seed:live": "node seed-data.js live",
+    "monitor": "node monitor.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  }
+}
