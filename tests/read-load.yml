@@ -1,0 +1,50 @@
+
+config:
+  target: "http://localhost:3001"  # Change to your read API port
+  phases:
+    - duration: 30
+      arrivalRate: 50
+      name: "Warmup - 50 req/sec"
+    - duration: 60
+      arrivalRate: 200
+      name: "Sustained load - 200 req/sec"
+    - duration: 30
+      arrivalRate: 500
+      name: "Peak load - 500 req/sec"
+    - duration: 20
+      arrivalRate: 1000
+      name: "Spike - 1000 req/sec"
+
+scenarios:
+  - name: "Query dashboard"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/queries/dashboard"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  - name: "Query service metrics"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/queries/services/{{ $randomNumber(1, 5) }}/metrics"
+          expect:
+            - statusCode: 200
+
+  - name: "Query hourly aggregations"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/queries/metrics/hourly?service_id={{ $randomNumber(1, 5) }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Query services list"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/queries/services"
+          expect:
+            - statusCode: 200
