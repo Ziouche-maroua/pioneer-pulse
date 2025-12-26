@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   write-db:
     image: postgres:15-alpine
@@ -18,7 +20,19 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: ./backend
+    environment:
+      PORT: 3000
+      WRITE_DB_HOST: write-db
+      WRITE_DB_PORT: 5432
+      WRITE_DB_USER: writeuser
+      WRITE_DB_PASSWORD: writepass
+      WRITE_DB_NAME: pioneerpulse_write
+    ports:
+      - "3000:3000"
+    depends_on:
+      - write-db
 
 volumes:
   write-data:
-  

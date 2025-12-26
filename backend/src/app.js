@@ -1,15 +1,16 @@
 const express = require("express");
-const { createMetric } = require("./commands/metrics.command");
+const agentRoutes = require("./routes/agent.routes");
+const metricsRoutes = require("./routes/metrics.routes");
+const registerRoutes = require("./routes/register.routes");
+
 
 const app = express();
-
 app.use(express.json());
 
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
+app.use("/agents", agentRoutes);
+app.use("/metrics", metricsRoutes);
+app.use("/auth", registerRoutes);
 
-// Command  (WRITE)
-app.post("/metrics", createMetric);
+
 
 module.exports = app;

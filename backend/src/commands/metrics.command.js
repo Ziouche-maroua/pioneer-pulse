@@ -1,33 +1,48 @@
-const pool = require("../db");
+const writePool = require("../db/writedb");
 
-async function createMetric(req, res) {
-  const { service, cpu, memory } = req.body;
+async function createMetrics(req, res) {
+  const { agent_id, system, processes } = req.body;
 
-  if (!service || cpu == null || memory == null) {
-    return res.status(400).json({ error: "Missing fields" });
+  if (!agent_id || !system) {
+    return res.status(400).json({ error: "Invalid payload" });
   }
 
-  try {
-    // Ensure service exists (or create it)
-    const serviceResult = await pool.query(
-      "INSERT INTO services (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id",
-      [service]
-    );
+  // update heartbeat :))
+  await writePool.query(
+    `UPDATE agents SET last_heartbeat = NOW() WHERE id = $1`,
+    [agent_id]
+  );
 
-    const serviceId = serviceResult.rows[0].id;
+  // system metrics
+  await writePool.query(
+    `
+    INSERT INTO system_metrics
+    (agent_id, cpu_usage, memory_usage, load_avg)
+    VALUES ($1, $2, $3, $4)
+    `,
+    [
+      agent_id,
+      system.cpu_usage,
+      system.memory_usage,
+      system.load_avg
+    ]
+  );
 
-    //  Insert metric
-    await pool.query(
-      "INSERT INTO metrics (service_id, cpu_usage, memory_usage) VALUES ($1, $2, $3)",
-      [serviceId, cpu, memory]
-    );
-
-    res.status(201).json({ message: "Metric stored successfully" });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+  // process metrics
+  if (Array.isArray(processes)) {
+    for (const p of processes) {
+      await writePool.query(
+        `
+        INSERT INTO process_metrics
+        (agent_id, process_name, pid, cpu_usage, memory_usage)
+        VALUES ($1, $2, $3, $4, $5)
+        `,
+        [agent_id, p.name, p.pid, p.cpu, p.memory]
+      );
+    }
   }
+
+  res.status(201).json({ message: "Metrics stored" });
 }
 
-module.exports = { createMetric };
+module.exports = { createMetrics };
