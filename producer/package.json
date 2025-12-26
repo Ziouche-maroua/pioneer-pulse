@@ -11,6 +11,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "axios": "^1.13.2"
+    "axios": "^1.13.2",
+    "systeminformation": "^5.28.1",
+    "uuid": "^8.3.2"
   }
 }
