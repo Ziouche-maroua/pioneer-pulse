@@ -1,0 +1,34 @@
+
+config:
+  target: "http://localhost:3000"  #  write API port
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Warmup - 10 req/sec"
+    - duration: 60
+      arrivalRate: 50
+      name: "Sustained load - 50 req/sec"
+    - duration: 30
+      arrivalRate: 100
+      name: "Peak load - 100 req/sec"
+    - duration: 20
+      arrivalRate: 200
+      name: "Spike - 200 req/sec"
+  processor: "./test-helpers.js"
+
+scenarios:
+  - name: "Record metrics"
+    weight: 100
+    flow:
+      - post:
+          url: "/api/commands/metrics"
+          json:
+            service_id: "{{ $randomNumber(1, 5) }}"
+            metric_type: "{{ randomMetricType() }}"
+            value: "{{ $randomNumber(10, 100) }}"
+            recorded_at: "{{ now() }}"
+          capture:
+            - json: "$.metric.id"
+              as: "metricId"
+          expect:
+            - statusCode: 201
