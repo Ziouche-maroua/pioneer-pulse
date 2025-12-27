@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS system_metrics (
     cpu_usage REAL NOT NULL,
     memory_usage REAL NOT NULL,
     load_avg REAL,
+    disk_usage REAL,
+    network_rx BIGINT,
+    network_tx BIGINT,
+    gpu_usage REAL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
