@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS agents (
+CREATE TABLE IF NOT EXISTS services (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL,
     hostname TEXT,
@@ -9,20 +9,20 @@ CREATE TABLE IF NOT EXISTS agents (
 );
 
 
--- like an agent-based
+-- like an server based
 CREATE TABLE IF NOT EXISTS system_metrics (
      id SERIAL PRIMARY KEY,
-    agent_id UUID NOT NULL,
+    service_id UUID NOT NULL,
     cpu_usage REAL NOT NULL,
     memory_usage REAL NOT NULL,
     load_avg REAL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- PROCESS METRICS (real running apps)
+-- PROCESS METRICS ( running apps)
 CREATE TABLE IF NOT EXISTS process_metrics (
      id SERIAL PRIMARY KEY,
-    agent_id UUID NOT NULL,
+    service_id UUID NOT NULL,
     process_name TEXT,
     pid INTEGER,
     cpu_usage REAL,
@@ -41,16 +41,16 @@ CREATE TABLE IF NOT EXISTS users (
 
 
 ALTER TABLE system_metrics
-ADD CONSTRAINT fk_agent 
-FOREIGN KEY(agent_id)
-REFERENCES agents(id)
+ADD CONSTRAINT fk_service 
+FOREIGN KEY(service_id)
+REFERENCES services(id)
 ON DELETE CASCADE;
 
 ALTER TABLE process_metrics
-ADD CONSTRAINT fk_agent_process 
-FOREIGN KEY(agent_id)   
-REFERENCES agents(id)
+ADD CONSTRAINT fk_service_process 
+FOREIGN KEY(service_id)   
+REFERENCES services(id)
 ON DELETE CASCADE;
 
-CREATE INDEX idx_system_agent ON system_metrics(agent_id);
-CREATE INDEX idx_process_agent ON process_metrics(agent_id);
+CREATE INDEX idx_system_service ON system_metrics(service_id);
+CREATE INDEX idx_process_service ON process_metrics(service_id);

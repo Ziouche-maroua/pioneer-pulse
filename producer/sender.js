@@ -1,8 +1,8 @@
 const axios = require("axios");
 
-async function sendMetrics(agentId, payload) {
+async function sendMetrics(serviceId, payload) {
   await axios.post(`${process.env.BACKEND_URL}/metrics`, {
-    agent_id: agentId,
+    service_id: serviceId,
     ...payload
   });
 }

@@ -1,27 +1,27 @@
 const writePool = require("../db/writedb");
 
 async function createMetrics(req, res) {
-  const { agent_id, system, processes } = req.body;
+  const { service_id, system, processes } = req.body;
 
-  if (!agent_id || !system) {
+  if (!service_id || !system) {
     return res.status(400).json({ error: "Invalid payload" });
   }
 
   // update heartbeat :))
   await writePool.query(
-    `UPDATE agents SET last_heartbeat = NOW() WHERE id = $1`,
-    [agent_id]
+    `UPDATE services SET last_heartbeat = NOW() WHERE id = $1`,
+    [service_id]
   );
 
   // system metrics
   await writePool.query(
     `
     INSERT INTO system_metrics
-    (agent_id, cpu_usage, memory_usage, load_avg)
+    (service_id, cpu_usage, memory_usage, load_avg)
     VALUES ($1, $2, $3, $4)
     `,
     [
-      agent_id,
+      service_id,
       system.cpu_usage,
       system.memory_usage,
       system.load_avg
@@ -34,10 +34,10 @@ async function createMetrics(req, res) {
       await writePool.query(
         `
         INSERT INTO process_metrics
-        (agent_id, process_name, pid, cpu_usage, memory_usage)
+        (service_id, process_name, pid, cpu_usage, memory_usage)
         VALUES ($1, $2, $3, $4, $5)
         `,
-        [agent_id, p.name, p.pid, p.cpu, p.memory]
+        [service_id, p.name, p.pid, p.cpu, p.memory]
       );
     }
   }

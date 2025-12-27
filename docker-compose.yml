@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   write-db:
     image: postgres:15-alpine
