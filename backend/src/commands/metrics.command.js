@@ -17,17 +17,18 @@ async function createMetrics(req, res) {
   await writePool.query(
     `
     INSERT INTO system_metrics
-    (service_id, cpu_usage, memory_usage, load_avg, disks, network, gpu)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    (service_id, cpu_usage, memory_usage, load_avg, disk_usage, network_rx, network_tx, gpu_usage)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `,
     [
       service_id,
       system.cpu_usage,
       system.memory_usage,
       system.load_avg,
-      system.disks ? JSON.stringify(system.disks) : null,     
-      system.network ? JSON.stringify(system.network) : null,  // Convert to JSON string
-      system.gpu ? JSON.stringify(system.gpu) : null   
+      system.disk_usage,
+    system.network_rx,
+    system.network_tx,
+    system.gpu_usage
     ]
   );
 
