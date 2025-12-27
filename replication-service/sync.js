@@ -60,108 +60,212 @@ async function saveReplicationMetrics(lagSeconds) {
   }
 }
 
-async function handleMetricRecorded(event) {
+//i've added this function to determine service status based on cpu, memory, and last heartbeat
+function determineServiceStatus(cpu, memory, lastHeartbeat) {
+  const now = new Date();
+  const heartbeatAge = (now - new Date(lastHeartbeat)) / 1000; // seconds
+  
+  if (heartbeatAge > 300) return 'inactive'; // No heartbeat for 5 minutes
+  if (cpu > 90 || memory > 90) return 'critical';
+  if (cpu > 75 || memory > 75) return 'warning';
+  return 'active';
+}
+
+function calculateTrend(current, previous) {
+  if (!previous) return 'stable';
+  const diff = current - previous;
+  if (Math.abs(diff) < 2) return 'stable'; // Less than 2% change
+  return diff > 0 ? 'up' : 'down';
+}
+
+//i've edited this function to handle 'metric_recorded' events after we added new views and tables
+async function handleSystemMetricRecorded(event) {
   const data = event.payload;
   const readClient = await readDB.connect();
 
   try {
     await readClient.query("BEGIN");
 
-    // Update dashboard_metrics_view (latest value per service+metric)
+    // 1. Update system_metrics_latest_view
+    const previousResult = await readClient.query(
+      'SELECT cpu_usage, memory_usage, disk_usage FROM system_metrics_latest_view WHERE service_id = $1',
+      [data.service_id]
+    );
+    const previous = previousResult.rows[0];
+
     await readClient.query(
-      `INSERT INTO dashboard_metrics_view 
-       (service_id, service_name, metric_type, latest_value, latest_timestamp, updated_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
-       ON CONFLICT (service_id, metric_type) 
+      `INSERT INTO system_metrics_latest_view 
+       (service_id, service_name, cpu_usage, memory_usage, disk_usage, load_avg, 
+        network_rx, network_tx, gpu_usage, cpu_trend, memory_trend, disk_trend, 
+        latest_timestamp, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+       ON CONFLICT (service_id) 
        DO UPDATE SET 
-         latest_value = EXCLUDED.latest_value,
+         cpu_usage = EXCLUDED.cpu_usage,
+         memory_usage = EXCLUDED.memory_usage,
+         disk_usage = EXCLUDED.disk_usage,
+         load_avg = EXCLUDED.load_avg,
+         network_rx = EXCLUDED.network_rx,
+         network_tx = EXCLUDED.network_tx,
+         gpu_usage = EXCLUDED.gpu_usage,
+         cpu_trend = EXCLUDED.cpu_trend,
+         memory_trend = EXCLUDED.memory_trend,
+         disk_trend = EXCLUDED.disk_trend,
          latest_timestamp = EXCLUDED.latest_timestamp,
-         trend = CASE 
-           WHEN EXCLUDED.latest_value > dashboard_metrics_view.latest_value THEN 'up'
-           WHEN EXCLUDED.latest_value < dashboard_metrics_view.latest_value THEN 'down'
-           ELSE 'stable'
-         END,
          updated_at = NOW()`,
       [
         data.service_id,
         data.service_name,
-        data.metric_type,
-        data.value,
-        data.recorded_at,
+        data.cpu_usage,
+        data.memory_usage,
+        data.disk_usage,
+        data.load_avg,
+        data.network_rx,
+        data.network_tx,
+        data.gpu_usage,
+        calculateTrend(data.cpu_usage, previous?.cpu_usage),
+        calculateTrend(data.memory_usage, previous?.memory_usage),
+        calculateTrend(data.disk_usage, previous?.disk_usage),
+        data.created_at
       ]
     );
 
-    // Update hourly aggregation
-    const hourTimestamp = new Date(data.recorded_at);
-    hourTimestamp.setMinutes(0, 0, 0); // Round to hour
+    // 2. Update hourly aggregation
+    const createdAt = new Date(data.created_at);
+    const hourTimestamp = new Date(createdAt);
+    hourTimestamp.setMinutes(0, 0, 0);
 
     await readClient.query(
-      `INSERT INTO metrics_hourly_agg 
-       (service_id, metric_type, hour_timestamp, avg_value, min_value, max_value, sample_count)
-       VALUES ($1, $2, $3, $4, $4, $4, 1)
-       ON CONFLICT (service_id, metric_type, hour_timestamp)
+      `INSERT INTO system_metrics_hourly_agg 
+       (service_id, hour_timestamp, avg_cpu, min_cpu, max_cpu, 
+        avg_memory, min_memory, max_memory, avg_disk, min_disk, max_disk,
+        avg_load, min_load, max_load, total_network_rx, total_network_tx,
+        avg_gpu, max_gpu, sample_count)
+       VALUES ($1, $2, $3, $3, $3, $4, $4, $4, $5, $5, $5, $6, $6, $6, $7, $8, $9, $9, 1)
+       ON CONFLICT (service_id, hour_timestamp)
        DO UPDATE SET
-         avg_value = (
-           (metrics_hourly_agg.avg_value * metrics_hourly_agg.sample_count + EXCLUDED.avg_value) 
-           / (metrics_hourly_agg.sample_count + 1)
-         ),
-         min_value = LEAST(metrics_hourly_agg.min_value, EXCLUDED.min_value),
-         max_value = GREATEST(metrics_hourly_agg.max_value, EXCLUDED.max_value),
-       (service_id, metric_type, hour_timestamp, avg_value, min_value, max_value, sample_count)
-       VALUES ($1, $2, $3, $4, $4, $4, 1)
-       ON CONFLICT (service_id, metric_type, hour_timestamp)
-       DO UPDATE SET
-         avg_value = (
-           (metrics_hourly_agg.avg_value * metrics_hourly_agg.sample_count + EXCLUDED.avg_value) 
-           / (metrics_hourly_agg.sample_count + 1)
-         ),
-         min_value = LEAST(metrics_hourly_agg.min_value, EXCLUDED.min_value),
-         max_value = GREATEST(metrics_hourly_agg.max_value, EXCLUDED.max_value),
-         sample_count = metrics_hourly_agg.sample_count + 1`,
-      [data.service_id, data.metric_type, hourTimestamp, data.value]
+         avg_cpu = ((system_metrics_hourly_agg.avg_cpu * system_metrics_hourly_agg.sample_count + EXCLUDED.avg_cpu) 
+                    / (system_metrics_hourly_agg.sample_count + 1)),
+         min_cpu = LEAST(system_metrics_hourly_agg.min_cpu, EXCLUDED.min_cpu),
+         max_cpu = GREATEST(system_metrics_hourly_agg.max_cpu, EXCLUDED.max_cpu),
+         avg_memory = ((system_metrics_hourly_agg.avg_memory * system_metrics_hourly_agg.sample_count + EXCLUDED.avg_memory) 
+                       / (system_metrics_hourly_agg.sample_count + 1)),
+         min_memory = LEAST(system_metrics_hourly_agg.min_memory, EXCLUDED.min_memory),
+         max_memory = GREATEST(system_metrics_hourly_agg.max_memory, EXCLUDED.max_memory),
+         avg_disk = ((COALESCE(system_metrics_hourly_agg.avg_disk, 0) * system_metrics_hourly_agg.sample_count + COALESCE(EXCLUDED.avg_disk, 0)) 
+                     / (system_metrics_hourly_agg.sample_count + 1)),
+         min_disk = LEAST(system_metrics_hourly_agg.min_disk, EXCLUDED.min_disk),
+         max_disk = GREATEST(system_metrics_hourly_agg.max_disk, EXCLUDED.max_disk),
+         avg_load = ((COALESCE(system_metrics_hourly_agg.avg_load, 0) * system_metrics_hourly_agg.sample_count + COALESCE(EXCLUDED.avg_load, 0)) 
+                     / (system_metrics_hourly_agg.sample_count + 1)),
+         total_network_rx = system_metrics_hourly_agg.total_network_rx + COALESCE(EXCLUDED.total_network_rx, 0),
+         total_network_tx = system_metrics_hourly_agg.total_network_tx + COALESCE(EXCLUDED.total_network_tx, 0),
+         avg_gpu = ((COALESCE(system_metrics_hourly_agg.avg_gpu, 0) * system_metrics_hourly_agg.sample_count + COALESCE(EXCLUDED.avg_gpu, 0)) 
+                    / (system_metrics_hourly_agg.sample_count + 1)),
+         max_gpu = GREATEST(COALESCE(system_metrics_hourly_agg.max_gpu, 0), COALESCE(EXCLUDED.max_gpu, 0)),
+         sample_count = system_metrics_hourly_agg.sample_count + 1`,
+      [
+        data.service_id,
+        hourTimestamp,
+        data.cpu_usage,
+        data.memory_usage,
+        data.disk_usage,
+        data.load_avg,
+        data.network_rx || 0,
+        data.network_tx || 0,
+        data.gpu_usage
+      ]
     );
 
-    // Update services_status_view
+    // 3. Update services_status_view
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    
+    // Calculate 1-hour averages
+    const avgResult = await readClient.query(
+      `SELECT 
+         COALESCE(AVG(cpu_usage), 0) as avg_cpu,
+         COALESCE(AVG(memory_usage), 0) as avg_memory,
+         COALESCE(AVG(disk_usage), 0) as avg_disk
+       FROM system_metrics_latest_view 
+       WHERE service_id = $1 AND latest_timestamp > $2`,
+      [data.service_id, oneHourAgo]
+    );
+
+    const status = determineServiceStatus(
+      data.cpu_usage, 
+      data.memory_usage, 
+      data.service_last_heartbeat || new Date()
+    );
+
     await readClient.query(
       `INSERT INTO services_status_view 
-       (service_id, name, hostname, ip_address, status, last_metric_time, total_metrics_count)
-       VALUES ($1, $2, $3, $4, 'active', $5, 1)
+       (service_id, name, hostname, os, version, status, last_heartbeat,
+        latest_cpu, latest_memory, latest_disk, latest_load_avg,
+        avg_cpu_1h, avg_memory_1h, avg_disk_1h, total_metrics_count, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 1, NOW())
        ON CONFLICT (service_id)
        DO UPDATE SET
-         last_metric_time = EXCLUDED.last_metric_time,
+         latest_cpu = EXCLUDED.latest_cpu,
+         latest_memory = EXCLUDED.latest_memory,
+         latest_disk = EXCLUDED.latest_disk,
+         latest_load_avg = EXCLUDED.latest_load_avg,
+         avg_cpu_1h = EXCLUDED.avg_cpu_1h,
+         avg_memory_1h = EXCLUDED.avg_memory_1h,
+         avg_disk_1h = EXCLUDED.avg_disk_1h,
+         status = EXCLUDED.status,
+         last_heartbeat = EXCLUDED.last_heartbeat,
          total_metrics_count = services_status_view.total_metrics_count + 1,
          updated_at = NOW()`,
       [
         data.service_id,
         data.service_name,
-        data.hostname || "unknown",
-        data.ip_address || null,
-        data.recorded_at,
+        data.service_hostname,
+        data.service_os,
+        data.service_version,
+        status,
+        data.service_last_heartbeat || new Date(),
+        data.cpu_usage,
+        data.memory_usage,
+        data.disk_usage,
+        data.load_avg,
+        parseFloat(avgResult.rows[0].avg_cpu).toFixed(2),
+        parseFloat(avgResult.rows[0].avg_memory).toFixed(2),
+        parseFloat(avgResult.rows[0].avg_disk).toFixed(2)
       ]
     );
 
-    // Calculate and update 1-hour averages for services_status_view
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    await readClient.query(
-      `UPDATE services_status_view 
-       SET 
-         avg_cpu_1h = (
-           SELECT COALESCE(AVG(latest_value), 0) 
-           FROM dashboard_metrics_view 
-           WHERE service_id = $1 
-             AND metric_type = 'cpu'
-             AND latest_timestamp > $2
-         ),
-         avg_memory_1h = (
-           SELECT COALESCE(AVG(latest_value), 0) 
-           FROM dashboard_metrics_view 
-           WHERE service_id = $1 
-             AND metric_type = 'memory'
-             AND latest_timestamp > $2
-         )
-       WHERE service_id = $1`,
-      [data.service_id, oneHourAgo]
-    );
+    // 4. Check for alerts (simple thresholds)
+    if (data.cpu_usage > 90 || data.memory_usage > 90 || (data.disk_usage && data.disk_usage > 90)) {
+      let alertType = '';
+      let currentValue = 0;
+      let threshold = 90;
+      
+      if (data.cpu_usage > 90) {
+        alertType = 'cpu_high';
+        currentValue = data.cpu_usage;
+      } else if (data.memory_usage > 90) {
+        alertType = 'memory_high';
+        currentValue = data.memory_usage;
+      } else {
+        alertType = 'disk_full';
+        currentValue = data.disk_usage;
+      }
+
+      await readClient.query(
+        `INSERT INTO alert_triggers_view 
+         (service_id, service_name, alert_type, severity, current_value, threshold_value, message, triggered_at)
+         VALUES ($1, $2, $3, 'critical', $4, $5, $6, $7)`,
+        [
+          data.service_id,
+          data.service_name,
+          alertType,
+          currentValue,
+          threshold,
+          `${alertType.replace('_', ' ').toUpperCase()}: ${currentValue.toFixed(1)}% (threshold: ${threshold}%)`,
+          data.created_at
+        ]
+      );
+    }
 
     await readClient.query("COMMIT");
   } catch (err) {
@@ -172,16 +276,72 @@ async function handleMetricRecorded(event) {
   }
 }
 
+//i've added this function to handle 'process_metric_recorded' events after we added new views and tables
+
+async function handleProcessMetricRecorded(event) {
+  const data = event.payload;
+
+  try {
+    // Store in process_metrics_view (keep latest N per service)
+    await readDB.query(
+      `INSERT INTO process_metrics_view 
+       (service_id, service_name, process_name, pid, cpu_usage, memory_usage, timestamp, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+      [
+        data.service_id,
+        data.service_name,
+        data.process_name,
+        data.pid,
+        data.cpu_usage,
+        data.memory_usage,
+        data.created_at
+      ]
+    );
+
+    // Update total_processes in services_status_view
+    const countResult = await readDB.query(
+      'SELECT COUNT(DISTINCT process_name) as count FROM process_metrics_view WHERE service_id = $1',
+      [data.service_id]
+    );
+
+    await readDB.query(
+      'UPDATE services_status_view SET total_processes = $1 WHERE service_id = $2',
+      [countResult.rows[0].count, data.service_id]
+    );
+  } catch (err) {
+    throw err;
+  }
+}
+
 async function handleServiceCreated(event) {
   const data = event.payload;
 
-  await readDB.query(
-    `INSERT INTO services_status_view 
-     (service_id, name, hostname, ip_address, status, total_metrics_count)
-     VALUES ($1, $2, $3, $4, $5, 0)
-     ON CONFLICT (service_id) DO NOTHING`,
-    [data.id, data.name, data.hostname, data.ip_address, data.status || "active"]
-  );
+  try {
+    await readDB.query(
+      `INSERT INTO services_status_view 
+       (service_id, name, hostname, os, version, status, last_heartbeat, total_metrics_count)
+       VALUES ($1, $2, $3, $4, $5, 'active', $6, 0)
+       ON CONFLICT (service_id) DO NOTHING`,
+      [data.id, data.name, data.hostname, data.os, data.version, data.last_heartbeat || new Date()]
+    );
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function handleServiceHeartbeat(event) {
+  const data = event.payload;
+
+  try {
+    await readDB.query(
+      `UPDATE services_status_view 
+       SET last_heartbeat = $1, status = 'active', updated_at = NOW()
+       WHERE service_id = $2`,
+      [data.last_heartbeat, data.service_id]
+    );
+  } catch (err) {
+    throw err;
+  }
 }
 
 async function processEvent(event, retryCount = 0) {
@@ -190,17 +350,22 @@ async function processEvent(event, retryCount = 0) {
 
   try {
     switch (event.event_type) {
-      case "metric_recorded":
-        await handleMetricRecorded(event);
+      case "system_metric_recorded":
+        await handleSystemMetricRecorded(event);
+        break;
+      case "process_metric_recorded":
+        await handleProcessMetricRecorded(event);
         break;
       case "service_created":
         await handleServiceCreated(event);
         break;
+      case "service_heartbeat":
+        await handleServiceHeartbeat(event);
+        break;
       default:
-        console.warn(`⚠️  Unknown event type: ${event.event_type}`);
+        console.warn(` Unknown event type: ${event.event_type}`);
     }
 
-    // Mark as processed
     await writeDB.query(
       "UPDATE events SET processed = true, processed_at = NOW() WHERE id = $1",
       [event.id]
@@ -210,19 +375,18 @@ async function processEvent(event, retryCount = 0) {
     return true;
   } catch (err) {
     console.error(
-      ` Error processing event ${event.id} (${event.event_type}):`,
+      `Error processing event ${event.id} (${event.event_type}):`,
       err.message
     );
 
     if (retryCount < MAX_RETRIES) {
-      console.log(` Retrying in ${RETRY_DELAY_MS}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      console.log(`Retrying in ${RETRY_DELAY_MS}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       return processEvent(event, retryCount + 1);
     } else {
       metrics.eventsErrored++;
-      console.error(` Event ${event.id} failed after ${MAX_RETRIES} retries`);
+      console.error(`Event ${event.id} failed after ${MAX_RETRIES} retries`);
       
-      // Mark as processed to avoid infinite retry (log for manual review)
       await writeDB.query(
         "UPDATE events SET processed = true, processed_at = NOW() WHERE id = $1",
         [event.id]
@@ -231,6 +395,7 @@ async function processEvent(event, retryCount = 0) {
     }
   }
 }
+
 // MAIN SYNC LOOP (EVENT-DRIVEN)
 
 async function syncEvents() {
@@ -292,6 +457,8 @@ async function syncEvents() {
     console.error(" Sync error:", err.message);
   }
 }
+
+
 
 async function printStatus() {
   console.log("\n" + "=".repeat(70));
