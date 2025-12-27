@@ -40,6 +40,6 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Query Service running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(` Query Service running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
 });
