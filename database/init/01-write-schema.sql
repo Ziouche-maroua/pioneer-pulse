@@ -1,26 +1,56 @@
 CREATE TABLE IF NOT EXISTS services (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
+    id UUID PRIMARY KEY,
+    name TEXT NOT NULL,
+    hostname TEXT,
+    os TEXT,
+    version TEXT,
+    last_heartbeat TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS metrics (
-    id SERIAL PRIMARY KEY,
-    service_id INTEGER NOT NULL,
+
+-- like an server based
+CREATE TABLE IF NOT EXISTS system_metrics (
+     id SERIAL PRIMARY KEY,
+    service_id UUID NOT NULL,
     cpu_usage REAL NOT NULL,
     memory_usage REAL NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    load_avg REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-    CONSTRAINT fk_metrics_service
-        FOREIGN KEY (service_id)
-        REFERENCES services(id)
-        ON DELETE CASCADE
+-- PROCESS METRICS ( running apps)
+CREATE TABLE IF NOT EXISTS process_metrics (
+     id SERIAL PRIMARY KEY,
+    service_id UUID NOT NULL,
+    process_name TEXT,
+    pid INTEGER,
+    cpu_usage REAL,
+    memory_usage REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL, -- hashed
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
 
-CREATE INDEX IF NOT EXISTS idx_metrics_service_id
-    ON metrics(service_id);
+ALTER TABLE system_metrics
+ADD CONSTRAINT fk_service 
+FOREIGN KEY(service_id)
+REFERENCES services(id)
+ON DELETE CASCADE;
 
-CREATE INDEX IF NOT EXISTS idx_metrics_created_at
-    ON metrics(created_at);
+ALTER TABLE process_metrics
+ADD CONSTRAINT fk_service_process 
+FOREIGN KEY(service_id)   
+REFERENCES services(id)
+ON DELETE CASCADE;
+
+CREATE INDEX idx_system_service ON system_metrics(service_id);
+CREATE INDEX idx_process_service ON process_metrics(service_id);

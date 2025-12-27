@@ -1,17 +1,19 @@
 const express = require("express");
-const { createMetric } = require("./commands/metrics.command");
-const getDashboard = require("./queries/getDashboard");
+
+const agentRoutes = require("./routes/service.routes");
+const metricsRoutes = require("./routes/metrics.routes");
+const registerRoutes = require("./routes/register.routes");
+
+
 
 const app = express();
-
 app.use(express.json());
 
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
+app.use("/service", agentRoutes);
+app.use("/metrics", metricsRoutes);
+app.use("/auth", registerRoutes);
 
-// Command  (WRITE)
-app.post("/metrics", createMetric);
+
 
 // Query  (READ)
 app.get("/dashboard", getDashboard);

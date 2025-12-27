@@ -18,25 +18,21 @@ services:
       timeout: 5s
       retries: 5
 
-  read-db:
-    image: postgres:15-alpine
-    container_name: pioneerpulse-read-db
-    restart: unless-stopped
+
+  backend:
+    build: ./backend
     environment:
-      POSTGRES_USER: readuser
-      POSTGRES_PASSWORD: readpass
-      POSTGRES_DB: pioneerpulse_read
+      PORT: 3000
+      WRITE_DB_HOST: write-db
+      WRITE_DB_PORT: 5432
+      WRITE_DB_USER: writeuser
+      WRITE_DB_PASSWORD: writepass
+      WRITE_DB_NAME: pioneerpulse_write
     ports:
-      - "5434:5432"
-    volumes:
-      - read-data:/var/lib/postgresql/data
-      - ./database/init/02-read-schema.sql:/docker-entrypoint-initdb.d/02-init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U readuser"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - "3000:3000"
+    depends_on:
+      - write-db
 
 volumes:
   write-data:
-  read-data:
+
