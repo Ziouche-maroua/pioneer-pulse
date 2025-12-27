@@ -1,7 +1,9 @@
 const express = require("express");
+
 const agentRoutes = require("./routes/service.routes");
 const metricsRoutes = require("./routes/metrics.routes");
 const registerRoutes = require("./routes/register.routes");
+
 
 
 const app = express();
@@ -12,5 +14,8 @@ app.use("/metrics", metricsRoutes);
 app.use("/auth", registerRoutes);
 
 
+
+// Query  (READ)
+app.get("/dashboard", getDashboard);
 
 module.exports = app;

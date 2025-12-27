@@ -1,11 +1,14 @@
+
 const writePool = require("../db/writedb");
 
 async function createMetrics(req, res) {
   const { service_id, system, processes } = req.body;
 
+
   if (!service_id || !system) {
     return res.status(400).json({ error: "Invalid payload" });
   }
+
 
   // heartbeat
   await writePool.query(
@@ -52,6 +55,7 @@ async function createMetrics(req, res) {
       `,
       values
     );
+
   }
 
   res.status(201).json({ message: "Metrics stored" });
