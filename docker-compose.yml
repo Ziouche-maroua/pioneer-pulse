@@ -18,6 +18,7 @@ services:
       timeout: 5s
       retries: 5
 
+
   backend:
     build: ./backend
     environment:
@@ -34,3 +35,4 @@ services:
 
 volumes:
   write-data:
+
