@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 260 20% 6%;
+    --foreground: 0 0% 98%;
+    --card: 260 15% 12%;
+    --card-foreground: 0 0% 98%;
+    --card-glass: 260 15% 10%;
+    --popover: 260 15% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 85% 70%;
+    --primary-foreground: 260 20% 6%;
+    --secondary: 260 15% 18%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 260 10% 20%;
+    --muted-foreground: 260 5% 60%;
+    --accent: 180 60% 50%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 260 15% 20%;
+    --input: 260 15% 18%;
+    --ring: 0 85% 70%;
+    --radius: 1rem;
+    --coral: 0 85% 70%;
+    --coral-light: 0 90% 80%;
+    --coral-dark: 0 75% 55%;
+    --teal: 180 60% 50%;
+    --purple: 270 50% 60%;
+    --gradient-coral: linear-gradient(135deg, hsl(0 85% 70%), hsl(15 85% 65%));
+    --gradient-card: linear-gradient(135deg, hsl(260 15% 14% / 0.8), hsl(260 15% 10% / 0.6));
+    --gradient-glow: radial-gradient(ellipse at center, hsl(0 85% 70% / 0.15), transparent 70%);
+    --shadow-glow: 0 0 60px hsl(0 85% 70% / 0.2);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.3);
+    --sidebar-background: 260 15% 8%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 0 85% 70%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 260 15% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 260 15% 15%;
+    --sidebar-ring: 0 85% 70%;
+  }
+
+  .dark {
+    --background: 260 20% 6%;
+    --foreground: 0 0% 98%;
+  }
+  
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Gabarito', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-xl border border-border/30 rounded-2xl;
+    box-shadow: var(--shadow-card);
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+
+  .glass-card-hover:hover {
+    @apply border-primary/30;
+    box-shadow: var(--shadow-glow);
+  }
+
+  .gradient-coral {
+    background: var(--gradient-coral);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background: var(--gradient-coral);
+  }
+
+  .glow-coral {
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
