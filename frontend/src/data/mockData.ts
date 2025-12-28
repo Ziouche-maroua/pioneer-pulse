@@ -26,18 +26,15 @@ export interface ActivityStatus {
   thisWeek: string;
 }
 
-export interface Project {
-  name: string;
-  members: string[];
-  budget: string;
-  completion: number;
-}
 
-export interface Order {
-  title: string;
-  date: string;
-  icon: "bell" | "credit-card" | "cart" | "droplet" | "file-text" | "key" | "alert-circle";
-  color: "primary" | "destructive" | "teal" | "coral" | "purple";
+export interface Process {
+  serial_id: string;
+  service_id: string;
+  process_name: string;
+  pid: number;
+  cpu_usage: number;
+  memory_usage: number;
+  created_at: string;
 }
 
 export interface CpuGraphData {
@@ -104,21 +101,13 @@ export const mockData = {
     consumption: "163W/km",
     thisWeek: "1.342km",
   },
-  projects: [
-    { name: "Chakra Vision UI", members: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], budget: "$14,000", completion: 60 },
-    { name: "Add Progress Track", members: ["/placeholder.svg", "/placeholder.svg"], budget: "$3,000", completion: 10 },
-    { name: "Fix Platform Errors", members: ["/placeholder.svg", "/placeholder.svg"], budget: "Not Set", completion: 100 },
-    { name: "Launch our Mobile App", members: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], budget: "$32,000", completion: 100 },
-    { name: "Add the New Pricing", members: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], budget: "$400", completion: 25 },
-    { name: "Redesign New Online Shop", members: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], budget: "$8,000", completion: 40 },
-  ],
-  orders: [
-    { title: "$2400, Design changes", date: "22 DEC 7:20 PM", icon: "bell" as const, color: "primary" as const },
-    { title: "New order #4219423", date: "21 DEC 11:21 PM", icon: "file-text" as const, color: "destructive" as const },
-    { title: "Server Payments for April", date: "21 DEC 9:28 PM", icon: "cart" as const, color: "teal" as const },
-    { title: "New card added for order #3210145", date: "20 DEC 3:52 PM", icon: "credit-card" as const, color: "coral" as const },
-    { title: "Unlock packages for development", date: "19 DEC 11:35 PM", icon: "key" as const, color: "purple" as const },
-    { title: "New order #9851258", date: "18 DEC 4:41 PM", icon: "alert-circle" as const, color: "primary" as const },
+ 
+  processes: [
+    { serial_id: "a1b2c3d4", service_id: "web-server-1", process_name: "nginx", pid: 12345, cpu_usage: 12.5, memory_usage: 5.8, created_at: new Date(Date.now() - 1000 * 10).toISOString() },
+    { serial_id: "e5f6g7h8", service_id: "db-main", process_name: "postgres", pid: 67890, cpu_usage: 45.2, memory_usage: 25.1, created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
+    { serial_id: "i9j0k1l2", service_id: "auth-service", process_name: "node", pid: 10112, cpu_usage: 5.1, memory_usage: 15.3, created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString() },
+    { serial_id: "m3n4o5p6", service_id: "cache-redis", process_name: "redis-server", pid: 13141, cpu_usage: 2.8, memory_usage: 8.9, created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+    { serial_id: "q7r8s9t0", service_id: "log-aggregator", process_name: "vector", pid: 15161, cpu_usage: 8.9, memory_usage: 12.0, created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString() },
   ],
   cpuGraphData: [
     { name: "Mon", value: 30 },
@@ -176,70 +165,47 @@ const API_BASE_URL = "/api"; // Change this to your backend URL
 export const api = {
   // When backend is ready, replace the mock returns with actual fetch calls
   // Example: return fetch(`${API_BASE_URL}/stats`).then(res => res.json());
-  
+
   getStats: async (): Promise<StatsData> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/stats`).then(res => res.json());
     return mockData.stats;
   },
-
   getProfile: async (): Promise<ProfileData> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/profile`).then(res => res.json());
     return mockData.profile;
   },
-
   getActivityStatus: async (): Promise<ActivityStatus> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/activity-status`).then(res => res.json());
     return mockData.activityStatus;
   },
-
-  getProjects: async (): Promise<Project[]> => {
+ 
+  getProcesses: async (): Promise<Process[]> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/projects`).then(res => res.json());
-    return mockData.projects;
+    // TODO: Replace with: return fetch(`${API_BASE_URL}/processes`).then(res => res.json());
+    return mockData.processes;
   },
-
-  getOrders: async (): Promise<Order[]> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/orders`).then(res => res.json());
-    return mockData.orders;
-  },
-
   getCpuGraphData: async (): Promise<CpuGraphData[]> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/cpu-graph`).then(res => res.json());
     return mockData.cpuGraphData;
   },
-
   getMemoryGraphData: async (): Promise<MemoryGraphData[]> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/memory-graph`).then(res => res.json());
     return mockData.memoryGraphData;
   },
-
   getWelcome: async (): Promise<WelcomeData> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/welcome`).then(res => res.json());
     return mockData.welcome;
   },
-
   getSatisfaction: async (): Promise<SatisfactionData> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/satisfaction`).then(res => res.json());
     return mockData.satisfaction;
   },
-
   getReferral: async (): Promise<ReferralData> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/referral`).then(res => res.json());
     return mockData.referral;
   },
-
   getCpuStats: async (): Promise<CpuStats> => {
     await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/cpu-stats`).then(res => res.json());
     return mockData.cpuStats;
   },
 };

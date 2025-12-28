@@ -30,7 +30,7 @@ const Sidebar = () => {
             <span className="text-primary-foreground font-bold text-sm">P</span>
           </div>
           <span className="text-foreground font-semibold text-lg">Pioneer</span>
-          <span className="text-muted-foreground text-xs">PRO</span>
+          <span className="text-muted-foreground text-xs">PULSE</span>
         </div>
       </div>
 

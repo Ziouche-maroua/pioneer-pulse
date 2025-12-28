@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
-import heroFlowers from "@/assets/hero-flowers.jpg";
+import heroFlowers from "@/assets/jellyfish-bg.jpg";
 
 const partners = [
   "HubSpot", "Salesforce", "Zendesk", "Intercom", "Drift", "Mailchimp"

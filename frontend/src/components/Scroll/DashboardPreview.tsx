@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
-import dashboardPreview from "@/assets/dashboard-preview.jpg";
-
+import dashboardPreview from "@/assets/jellyfish-bg.jpg";
+// 5asni i change this to the previww
 const benefits = [
   "Real-time analytics dashboard",
   "Custom report builder",

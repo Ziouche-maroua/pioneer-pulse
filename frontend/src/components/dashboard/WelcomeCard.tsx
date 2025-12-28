@@ -27,7 +27,7 @@ const WelcomeCard = () => {
         <h2 className="text-foreground text-2xl font-bold mb-1">{welcome?.userName}</h2>
         <p className="text-muted-foreground text-sm">{welcome?.greeting}</p>
         <button className="mt-4 text-sm text-primary hover:text-coral-light transition-colors font-medium">
-          Tap to record →
+          Tap to see profile →
         </button>
       </div>
     </div>

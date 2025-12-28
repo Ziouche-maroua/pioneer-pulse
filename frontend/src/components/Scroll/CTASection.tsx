@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Zap, Heart } from "lucide-react";
-import ctaFlowers from "@/assets/cta-flowers.jpg";
+import ctaFlowers from "@/assets/jellyfish-bg.jpg";
 
 const benefits = [
   { icon: Zap, text: "Easy Onboarding" },

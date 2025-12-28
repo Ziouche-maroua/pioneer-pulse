@@ -22,17 +22,11 @@ export const useActivityStatus = () => {
   });
 };
 
-export const useProjects = () => {
-  return useQuery({
-    queryKey: ["projects"],
-    queryFn: api.getProjects,
-  });
-};
 
-export const useOrders = () => {
+export const useProcesses = () => {
   return useQuery({
-    queryKey: ["orders"],
-    queryFn: api.getOrders,
+    queryKey: ["processes"],
+    queryFn: api.getProcesses,
   });
 };
 
