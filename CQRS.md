@@ -100,5 +100,3 @@ Use CQRS when:
 Avoid CQRS when:
 - The application is simple
 - Strong consistency is required everywhere
-
-
