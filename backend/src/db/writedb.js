@@ -10,7 +10,7 @@ const writePool = new Pool({
 });
 
 writePool.on("connect", () => {
-  console.log("✅ Connected to write database");
+  console.log("✅ Connected to Write DB");
 });
 
 module.exports = writePool;

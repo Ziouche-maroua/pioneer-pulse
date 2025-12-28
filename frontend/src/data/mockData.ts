@@ -1,245 +1,247 @@
-// Mock data - replace fetch URLs with your API endpoints when backend is ready
+// Real API Integration - connects to your backend
+import type {
+  StatsData,
+  ProfileData,
+  ActivityStatus,
+  Project,
+  Order,
+  CpuGraphData,
+  MemoryGraphData,
+  WelcomeData,
+  SatisfactionData,
+  ReferralData,
+  CpuStats,
+} from './mockData';
 
-export interface StatsData {
-  todaysMoney: { value: string; change: string; changeType: "positive" | "negative" };
-  todaysUsers: { value: string; change: string; changeType: "positive" | "negative" };
-  newClients: { value: string; change: string; changeType: "positive" | "negative" };
-  totalSales: { value: string; change: string; changeType: "positive" | "negative" };
-}
+// Configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export interface ProfileData {
-  name: string;
-  email: string;
-  bio: string;
-  fullName: string;
-  mobile: string;
-  location: string;
-  avatar: string;
-}
-
-export interface ActivityStatus {
-  currentLoad: number;
-  timeToFullCharge: string;
-  batteryHealth: number;
-  efficiency: string;
-  consumption: string;
-  thisWeek: string;
-}
-
-export interface Project {
-  name: string;
-  members: string[];
-  budget: string;
-  completion: number;
-}
-
-export interface Order {
-  title: string;
-  date: string;
-  icon: "bell" | "credit-card" | "cart" | "droplet" | "file-text" | "key" | "alert-circle";
-  color: "primary" | "destructive" | "teal" | "coral" | "purple";
-}
-
-export interface CpuGraphData {
-  name: string;
-  value: number;
-}
-
-export interface MemoryGraphData {
-  name: string;
-  value: number;
-}
-
-export interface WelcomeData {
-  userName: string;
-  greeting: string;
-}
-
-export interface SatisfactionData {
-  percentage: number;
-  label: string;
-}
-
-export interface ReferralData {
-  invited: number;
-  bonus: number;
-  totalScore: number;
-}
-
-export interface CpuStats {
-  users: string;
-  clicks: string;
-  sales: string;
-  items: string;
-  changePercent: string;
-}
-
-// Mock data store - simulates API responses
-export const mockData = {
-  stats: {
-    todaysMoney: { value: "$53,000", change: "55%", changeType: "positive" as const },
-    todaysUsers: { value: "2,300", change: "3%", changeType: "positive" as const },
-    newClients: { value: "+1,052", change: "2%", changeType: "negative" as const },
-    totalSales: { value: "$173,000", change: "8%", changeType: "positive" as const },
-  },
-  profile: {
-    name: "Pichou_dev",
-    email: "exemple@gmail.com",
-    bio: "Hi, I'm Pichou_Dev. Decisions: If you can't decide, the answer is no. If two equally difficult paths, choose the one more painful in the short term (pain avoidance is creating an illusion of equality).",
-    fullName: "Pichou_Dev",
-    mobile: "(44) 123 1234 123",
-    location: "United States",
-    socialMedia: {
-      twitter: "#",
-      facebook: "#",
-      instagram: "#",
-    },
-    avatar: "/placeholder.svg",
-  },
-  activityStatus: {
-    currentLoad: 68,
-    timeToFullCharge: "0h 58 min",
-    batteryHealth: 76,
-    efficiency: "+20%",
-    consumption: "163W/km",
-    thisWeek: "1.342km",
-  },
-  projects: [
-    { name: "Chakra Vision UI", members: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], budget: "$14,000", completion: 60 },
-    { name: "Add Progress Track", members: ["/placeholder.svg", "/placeholder.svg"], budget: "$3,000", completion: 10 },
-    { name: "Fix Platform Errors", members: ["/placeholder.svg", "/placeholder.svg"], budget: "Not Set", completion: 100 },
-    { name: "Launch our Mobile App", members: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], budget: "$32,000", completion: 100 },
-    { name: "Add the New Pricing", members: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], budget: "$400", completion: 25 },
-    { name: "Redesign New Online Shop", members: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg"], budget: "$8,000", completion: 40 },
-  ],
-  orders: [
-    { title: "$2400, Design changes", date: "22 DEC 7:20 PM", icon: "bell" as const, color: "primary" as const },
-    { title: "New order #4219423", date: "21 DEC 11:21 PM", icon: "file-text" as const, color: "destructive" as const },
-    { title: "Server Payments for April", date: "21 DEC 9:28 PM", icon: "cart" as const, color: "teal" as const },
-    { title: "New card added for order #3210145", date: "20 DEC 3:52 PM", icon: "credit-card" as const, color: "coral" as const },
-    { title: "Unlock packages for development", date: "19 DEC 11:35 PM", icon: "key" as const, color: "purple" as const },
-    { title: "New order #9851258", date: "18 DEC 4:41 PM", icon: "alert-circle" as const, color: "primary" as const },
-  ],
-  cpuGraphData: [
-    { name: "Mon", value: 30 },
-    { name: "Tue", value: 45 },
-    { name: "Wed", value: 35 },
-    { name: "Thu", value: 60 },
-    { name: "Fri", value: 55 },
-    { name: "Sat", value: 40 },
-    { name: "Sun", value: 70 },
-    { name: "Mon", value: 65 },
-    { name: "Tue", value: 50 },
-    { name: "Wed", value: 75 },
-    { name: "Thu", value: 85 },
-    { name: "Fri", value: 80 },
-  ],
-  memoryGraphData: [
-    { name: "Mon", value: 45 },
-    { name: "Tue", value: 65 },
-    { name: "Wed", value: 55 },
-    { name: "Thu", value: 80 },
-    { name: "Fri", value: 70 },
-    { name: "Sat", value: 60 },
-    { name: "Sun", value: 85 },
-    { name: "Mon", value: 75 },
-    { name: "Tue", value: 90 },
-  ],
-  welcome: {
-    userName: "pichou_dev",
-    greeting: "Glad to see you again!",
-  },
-  satisfaction: {
-    percentage: 95,
-    label: "From all projects",
-  },
-  referral: {
-    invited: 145,
-    bonus: 1465,
-    totalScore: 9.3,
-  },
-  cpuStats: {
-    users: "32,984",
-    clicks: "2.42m",
-    sales: "2,400$",
-    items: "320",
-    changePercent: "+5%",
+// API Client
+const apiClient = {
+  get: async <T>(endpoint: string): Promise<T> => {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+    return response.json();
   },
 };
 
-// Simulated API delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Backend data interfaces (what your backend actually returns)
+interface BackendDashboard {
+  services: {
+    total_services: number;
+    active_services: number;
+    inactive_services: number;
+  };
+  metrics: {
+    avg_cpu: number;
+    avg_memory: number;
+    avg_disk: number;
+    total_alerts: number;
+  };
+  system_health: {
+    status: string;
+    uptime: number;
+  };
+}
 
-// API service - replace these URLs with your actual endpoints
-const API_BASE_URL = "/api"; // Change this to your backend URL
+interface BackendService {
+  id: number;
+  name: string;
+  hostname: string;
+  os: string;
+  status: string;
+  last_heartbeat: string;
+}
 
+interface BackendMetric {
+  timestamp: string;
+  cpu_usage: number;
+  memory_usage: number;
+  disk_usage: number;
+  network_rx: number;
+  network_tx: number;
+}
+
+interface BackendHourlyMetric {
+  hour: string;
+  avg_cpu: number;
+  avg_memory: number;
+  max_cpu: number;
+  max_memory: number;
+}
+
+// Data Adapters - Transform backend data to frontend format
+const adapters = {
+  dashboardToStats: (dashboard: BackendDashboard): StatsData => {
+    const { services, metrics } = dashboard;
+    
+    return {
+      todaysMoney: {
+        value: `${services.active_services}`,
+        change: metrics.total_alerts > 0 ? `-${metrics.total_alerts}` : "0",
+        changeType: metrics.total_alerts > 0 ? "negative" : "positive",
+      },
+      todaysUsers: {
+        value: `${services.total_services}`,
+        change: `${services.active_services}`,
+        changeType: "positive",
+      },
+      newClients: {
+        value: `${Math.round(metrics.avg_cpu)}%`,
+        change: metrics.avg_cpu > 80 ? "high" : "normal",
+        changeType: metrics.avg_cpu > 80 ? "negative" : "positive",
+      },
+      totalSales: {
+        value: `${Math.round(metrics.avg_memory)}%`,
+        change: `${Math.round(metrics.avg_disk)}%`,
+        changeType: metrics.avg_memory > 85 ? "negative" : "positive",
+      },
+    };
+  },
+
+  latestMetricsToActivityStatus: (metrics: BackendMetric | null): ActivityStatus => {
+    if (!metrics) {
+      return {
+        currentLoad: 0,
+        timeToFullCharge: "N/A",
+        batteryHealth: 0,
+        efficiency: "0%",
+        consumption: "0W",
+        thisWeek: "0km",
+      };
+    }
+
+    return {
+      currentLoad: metrics.cpu_usage,
+      timeToFullCharge: `${Math.round((100 - metrics.cpu_usage) / 10)} min`,
+      batteryHealth: 100 - metrics.memory_usage,
+      efficiency: `${metrics.cpu_usage > 50 ? '-' : '+'}${Math.abs(metrics.cpu_usage - 50)}%`,
+      consumption: `${Math.round(metrics.network_tx / 1000000)}MB/s`,
+      thisWeek: `${Math.round(metrics.network_rx / 1000000000)}GB`,
+    };
+  },
+
+  servicesToProjects: (services: BackendService[]): Project[] => {
+    return services.map(service => ({
+      name: service.name,
+      members: ["/placeholder.svg", "/placeholder.svg"], // You can enhance this
+      budget: service.status === "active" ? "Active" : "Inactive",
+      completion: service.status === "active" ? 100 : 0,
+    }));
+  },
+
+  hourlyMetricsToCpuGraph: (hourlyMetrics: BackendHourlyMetric[]): CpuGraphData[] => {
+    return hourlyMetrics.map(metric => ({
+      name: new Date(metric.hour).toLocaleTimeString('en-US', { hour: '2-digit' }),
+      value: Math.round(metric.avg_cpu),
+    }));
+  },
+
+  hourlyMetricsToMemoryGraph: (hourlyMetrics: BackendHourlyMetric[]): MemoryGraphData[] => {
+    return hourlyMetrics.map(metric => ({
+      name: new Date(metric.hour).toLocaleTimeString('en-US', { hour: '2-digit' }),
+      value: Math.round(metric.avg_memory),
+    }));
+  },
+
+  dashboardToCpuStats: (dashboard: BackendDashboard): CpuStats => {
+    const { services, metrics } = dashboard;
+    
+    return {
+      users: `${services.total_services}`,
+      clicks: `${Math.round(metrics.avg_cpu)}%`,
+      sales: `${Math.round(metrics.avg_memory)}%`,
+      items: `${metrics.total_alerts}`,
+      changePercent: metrics.avg_cpu > 50 ? `+${Math.round(metrics.avg_cpu - 50)}%` : `-${Math.round(50 - metrics.avg_cpu)}%`,
+    };
+  },
+};
+
+// Real API Implementation
 export const api = {
-  // When backend is ready, replace the mock returns with actual fetch calls
-  // Example: return fetch(`${API_BASE_URL}/stats`).then(res => res.json());
-  
   getStats: async (): Promise<StatsData> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/stats`).then(res => res.json());
-    return mockData.stats;
+    const dashboard = await apiClient.get<BackendDashboard>('/api/dashboard');
+    return adapters.dashboardToStats(dashboard);
   },
 
   getProfile: async (): Promise<ProfileData> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/profile`).then(res => res.json());
-    return mockData.profile;
+    // This would need a user profile endpoint in your backend
+    // For now, return static data
+    return {
+      name: "System Admin",
+      email: "admin@pioneerpulse.com",
+      bio: "Monitoring system administrator",
+      fullName: "System Administrator",
+      mobile: "N/A",
+      location: "Server Location",
+      avatar: "/placeholder.svg",
+    };
   },
 
   getActivityStatus: async (): Promise<ActivityStatus> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/activity-status`).then(res => res.json());
-    return mockData.activityStatus;
+    const metrics = await apiClient.get<BackendMetric>('/api/metrics/latest');
+    return adapters.latestMetricsToActivityStatus(metrics);
   },
 
   getProjects: async (): Promise<Project[]> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/projects`).then(res => res.json());
-    return mockData.projects;
+    const services = await apiClient.get<BackendService[]>('/api/services');
+    return adapters.servicesToProjects(services);
   },
 
   getOrders: async (): Promise<Order[]> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/orders`).then(res => res.json());
-    return mockData.orders;
+    // This could map to alerts
+    const alerts = await apiClient.get<any[]>('/api/alerts');
+    
+    return alerts.slice(0, 6).map((alert, index) => ({
+      title: alert.message || `Alert: ${alert.type}`,
+      date: new Date(alert.timestamp).toLocaleString(),
+      icon: "alert-circle" as const,
+      color: alert.severity === "critical" ? "destructive" as const : "primary" as const,
+    }));
   },
 
   getCpuGraphData: async (): Promise<CpuGraphData[]> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/cpu-graph`).then(res => res.json());
-    return mockData.cpuGraphData;
+    const hourlyMetrics = await apiClient.get<BackendHourlyMetric[]>('/api/metrics/hourly');
+    return adapters.hourlyMetricsToCpuGraph(hourlyMetrics.slice(-12)); // Last 12 hours
   },
 
   getMemoryGraphData: async (): Promise<MemoryGraphData[]> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/memory-graph`).then(res => res.json());
-    return mockData.memoryGraphData;
+    const hourlyMetrics = await apiClient.get<BackendHourlyMetric[]>('/api/metrics/hourly');
+    return adapters.hourlyMetricsToMemoryGraph(hourlyMetrics.slice(-9)); // Last 9 hours
   },
 
   getWelcome: async (): Promise<WelcomeData> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/welcome`).then(res => res.json());
-    return mockData.welcome;
+    return {
+      userName: "Admin",
+      greeting: "System monitoring dashboard",
+    };
   },
 
   getSatisfaction: async (): Promise<SatisfactionData> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/satisfaction`).then(res => res.json());
-    return mockData.satisfaction;
+    const dashboard = await apiClient.get<BackendDashboard>('/api/dashboard');
+    const healthPercentage = 100 - (dashboard.metrics.total_alerts * 10);
+    
+    return {
+      percentage: Math.max(0, Math.min(100, healthPercentage)),
+      label: "System Health",
+    };
   },
 
   getReferral: async (): Promise<ReferralData> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/referral`).then(res => res.json());
-    return mockData.referral;
+    const services = await apiClient.get<BackendService[]>('/api/services');
+    const dashboard = await apiClient.get<BackendDashboard>('/api/dashboard');
+    
+    return {
+      invited: services.length,
+      bonus: dashboard.metrics.total_alerts,
+      totalScore: dashboard.metrics.avg_cpu / 10,
+    };
   },
 
   getCpuStats: async (): Promise<CpuStats> => {
-    await delay(100);
-    // TODO: Replace with: return fetch(`${API_BASE_URL}/cpu-stats`).then(res => res.json());
-    return mockData.cpuStats;
+    const dashboard = await apiClient.get<BackendDashboard>('/api/dashboard');
+    return adapters.dashboardToCpuStats(dashboard);
   },
 };
