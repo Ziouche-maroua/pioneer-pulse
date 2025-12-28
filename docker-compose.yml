@@ -13,7 +13,7 @@ services:
       - write-data:/var/lib/postgresql/data
       - ./database/init/01-write-schema.sql:/docker-entrypoint-initdb.d/01-init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U writeuser"]
+      test: ["CMD-SHELL", "pg_isready -U writeuser -d pioneerpulse_write"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -29,10 +29,36 @@ services:
       WRITE_DB_PASSWORD: writepass
       WRITE_DB_NAME: pioneerpulse_write
     ports:
-      - "3000:3000"
+      - "5434:5432"
+    volumes:
+      - read-data:/var/lib/postgresql/data
+      - ./database/init/02-read-schema.sql:/docker-entrypoint-initdb.d/02-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U readuser -d pioneerpulse_read"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  query-service:
+    build: ./backend/src/query-service
+    container_name: pioneerpulse-query-service
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      READ_DB_HOST: read-db
+      READ_DB_PORT: 5432
+      READ_DB_USER: readuser
+      READ_DB_PASSWORD: readpass
+      READ_DB_NAME: pioneerpulse_read
     depends_on:
-      - write-db
-
+      read-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 volumes:
   write-data:
 
