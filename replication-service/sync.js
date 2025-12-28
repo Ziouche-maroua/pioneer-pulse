@@ -27,6 +27,8 @@ const metrics = {
   processingTimeMs: [],
   lastProcessedAt: null,
   currentBacklog: 0,
+  notificationsReceived: 0,
+  batchesProcessed: 0,
 };
 
 function recordProcessingTime(ms) {
@@ -130,7 +132,8 @@ async function handleSystemMetricRecorded(event) {
       ]
     );
 
-    // 2. Update hourly aggregation
+
+    // Update hourly aggregation
     const createdAt = new Date(data.created_at);
     const hourTimestamp = new Date(createdAt);
     hourTimestamp.setMinutes(0, 0, 0);
@@ -177,10 +180,9 @@ async function handleSystemMetricRecorded(event) {
       ]
     );
 
-    // 3. Update services_status_view
+    // Update services_status_view
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     
-    // Calculate 1-hour averages
     const avgResult = await readClient.query(
       `SELECT 
          COALESCE(AVG(cpu_usage), 0) as avg_cpu,
@@ -233,7 +235,6 @@ async function handleSystemMetricRecorded(event) {
         parseFloat(avgResult.rows[0].avg_disk).toFixed(2)
       ]
     );
-
     // 4. Check for alerts (simple thresholds)
     if (data.cpu_usage > 90 || data.memory_usage > 90 || (data.disk_usage && data.disk_usage > 90)) {
       let alertType = '';
@@ -276,13 +277,10 @@ async function handleSystemMetricRecorded(event) {
   }
 }
 
-//i've added this function to handle 'process_metric_recorded' events after we added new views and tables
-
 async function handleProcessMetricRecorded(event) {
   const data = event.payload;
 
   try {
-    // Store in process_metrics_view (keep latest N per service)
     await readDB.query(
       `INSERT INTO process_metrics_view 
        (service_id, service_name, process_name, pid, cpu_usage, memory_usage, timestamp, updated_at)
@@ -298,7 +296,6 @@ async function handleProcessMetricRecorded(event) {
       ]
     );
 
-    // Update total_processes in services_status_view
     const countResult = await readDB.query(
       'SELECT COUNT(DISTINCT process_name) as count FROM process_metrics_view WHERE service_id = $1',
       [data.service_id]
@@ -396,13 +393,10 @@ async function processEvent(event, retryCount = 0) {
   }
 }
 
-// MAIN SYNC LOOP (EVENT-DRIVEN)
-
-async function syncEvents() {
+async function processPendingEvents() {
   const startTime = Date.now();
 
   try {
-    // Fetch unprocessed events (batch of 100)
     const { rows: events } = await writeDB.query(
       `SELECT * FROM events 
        WHERE processed = false 
@@ -411,61 +405,97 @@ async function syncEvents() {
     );
 
     if (events.length === 0) {
-      console.log(" No pending events");
-      metrics.currentBacklog = 0;
       return;
     }
 
-    console.log(` Processing ${events.length} events...`);
+    console.log(`Processing ${events.length} events...`);
 
-    // Process each event
     let successCount = 0;
     for (const event of events) {
       const success = await processEvent(event);
       if (success) successCount++;
     }
 
-    // Calculate metrics
     const processingTime = Date.now() - startTime;
     recordProcessingTime(processingTime);
 
-    // Calculate replication lag
     const { rows: lagData } = await writeDB.query(
       `SELECT EXTRACT(EPOCH FROM (NOW() - MIN(created_at))) as lag_seconds
        FROM events WHERE processed = false`
     );
     const lagSeconds = lagData[0]?.lag_seconds || 0;
 
-    // Get backlog size
     const { rows: backlogData } = await writeDB.query(
       "SELECT COUNT(*) as count FROM events WHERE processed = false"
     );
     metrics.currentBacklog = parseInt(backlogData[0].count);
 
-    // Save metrics to read DB
     await saveReplicationMetrics(lagSeconds);
 
-    //   Log summary
     console.log(
-      ` Processed ${successCount}/${events.length} events in ${processingTime}ms | ` +
+      `Processed ${successCount}/${events.length} events in ${processingTime}ms | ` +
       `Backlog: ${metrics.currentBacklog} | Lag: ${lagSeconds.toFixed(2)}s | ` +
-      `Avg time: ${getAverageProcessingTime()}ms`
+      `Avg: ${getAverageProcessingTime()}ms`
     );
 
     metrics.lastProcessedAt = new Date();
+    metrics.batchesProcessed++;
+
+    // If there are more events, process them immediately
+    if (metrics.currentBacklog > 0) {
+      setImmediate(processPendingEvents);
+    }
   } catch (err) {
-    console.error(" Sync error:", err.message);
+    console.error("Sync error:", err.message);
   }
 }
 
 
+let listenClient = null;
+let isProcessing = false;
+
+async function setupEventListener() {
+  try {
+    listenClient = await writeDB.connect();
+    
+    listenClient.on('notification', async (msg) => {
+      metrics.notificationsReceived++;
+      
+      // Debounce: Don't trigger if already processing
+      if (isProcessing) {
+        return;
+      }
+      
+      isProcessing = true;
+      await processPendingEvents();
+      isProcessing = false;
+    });
+
+    listenClient.on('error', (err) => {
+      console.error('LISTEN client error:', err.message);
+      setupEventListener(); // Reconnect
+    });
+
+    await listenClient.query('LISTEN events_channel');
+    console.log('Listening for event notifications on "events_channel"');
+    
+    // Also process any existing backlog on startup
+    await processPendingEvents();
+  } catch (err) {
+    console.error('Failed to setup event listener:', err.message);
+    setTimeout(setupEventListener, 5000);
+  }
+}
+
 
 async function printStatus() {
   console.log("\n" + "=".repeat(70));
-  console.log("REPLICATION STATUS");
+  console.log("🚀 EVENT-DRIVEN REPLICATION STATUS");
   console.log("=".repeat(70));
   console.log(`Total processed: ${metrics.eventsProcessed}`);
   console.log(`Total errors: ${metrics.eventsErrored}`);
+  console.log(`Notifications received: ${metrics.notificationsReceived}`);
+  console.log(`Batches processed: ${metrics.batchesProcessed}`);
   console.log(`Current backlog: ${metrics.currentBacklog}`);
   console.log(`Avg processing time: ${getAverageProcessingTime()}ms`);
   console.log(
@@ -482,40 +512,39 @@ async function gracefulShutdown() {
 
   console.log("\n Shutting down gracefully...");
   
+  if (listenClient) {
+    await listenClient.query('UNLISTEN events_channel');
+    listenClient.release();
+  }
+  
   await writeDB.end();
   await readDB.end();
   
-  console.log(" All connections closed. Goodbye!");
+  console.log("All connections closed. Goodbye!");
   process.exit(0);
 }
 
 process.on("SIGINT", gracefulShutdown);
 process.on("SIGTERM", gracefulShutdown);
 
-// START REPLICATION SERVICE
-
 async function start() {
-  console.log(" Starting PioneerPulse Replication Service...");
+  console.log("Starting PioneerPulse Event-Driven Replication Service...");
+  console.log("Mode: PostgreSQL NOTIFY/LISTEN (TRUE Event-Driven)\n");
   
-  // Test connections
   try {
     await writeDB.query("SELECT NOW()");
     await readDB.query("SELECT NOW()");
-    console.log(" Database connections established");
+    console.log("Database connections established");
   } catch (err) {
     console.error("Failed to connect to databases:", err.message);
     process.exit(1);
   }
 
-  // Run sync every 1 second (configurable)
-  const SYNC_INTERVAL_MS = parseInt(process.env.SYNC_INTERVAL_MS) || 1000;
-  console.log(`  Sync interval: ${SYNC_INTERVAL_MS}ms\n`);
+  // Setup event listener
+  await setupEventListener();
 
-  setInterval(syncEvents, SYNC_INTERVAL_MS);
-  setInterval(printStatus, 10000); // Status every 10 seconds
-
-  // Run immediately
-  syncEvents();
+  // Status reporting every 10 seconds
+  setInterval(printStatus, 10000);
 }
 
 start();
