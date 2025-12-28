@@ -1,0 +1,34 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 50
+      name: "Generate writes"
+  processor: "./helpers.js"
+
+scenarios:
+  - name: "Write and verify replication"
+    flow:
+      - function: "generateMetricData"
+      - post:
+          url: "/api/metrics/system"
+          json:
+            service_id: "{{ serviceId }}"
+            cpu_usage: "{{ cpuUsage }}"
+            memory_usage: "{{ memoryUsage }}"
+          capture:
+            - json: "$.id"
+              as: "metricId"
+            - json: "$.created_at"
+              as: "createdAt"
+      
+      # Wait a bit, then check if it appears in read DB
+      - think: 0.5
+      
+      - get:
+          url: "http://localhost:3002/api/metrics/{{ metricId }}"
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$.found"
+              as: "isReplicated"
