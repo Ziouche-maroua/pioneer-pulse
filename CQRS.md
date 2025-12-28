@@ -100,3 +100,17 @@ Use CQRS when:
 Avoid CQRS when:
 - The application is simple
 - Strong consistency is required everywhere
+
+## Command Validation & Processing Lifecycle :
+## Synchronous vs Asynchronous Commands :
+## Consistency & Eventual Consistency :
+## Events, Messaging & Synchronization :
+## Error Handling Strategy :
+## Observability & Monitoring : 
+## Security & Authorization :
+## Common Pitfalls & Misconceptions :
+## Architecture Diagram : 
+## Implementation Roadmap :
+## Testing Strategy :
+## When NOT to Use CQRS :
+
