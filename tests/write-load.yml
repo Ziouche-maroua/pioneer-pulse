@@ -1,34 +1,54 @@
-
 config:
-  target: "http://localhost:3000"  #  write API port
+  target: "http://localhost:3000" 
   phases:
     - duration: 30
       arrivalRate: 10
-      name: "Warmup - 10 req/sec"
+      name: "Warmup"
     - duration: 60
       arrivalRate: 50
-      name: "Sustained load - 50 req/sec"
+      name: "Sustained load"
     - duration: 30
       arrivalRate: 100
-      name: "Peak load - 100 req/sec"
-    - duration: 20
+      name: "Peak load"
+    - duration: 30
       arrivalRate: 200
-      name: "Spike - 200 req/sec"
-  processor: "./test-helpers.js"
-
+      name: "Stress test"
+  processor: "./helpers.js"
+  
 scenarios:
-  - name: "Record metrics"
-    weight: 100
+  - name: "Create system metrics"
+    weight: 70
     flow:
+      - function: "generateMetricData"
       - post:
-          url: "/api/commands/metrics"
+          url: "/api/metrics/system"
           json:
-            service_id: "{{ $randomNumber(1, 5) }}"
-            metric_type: "{{ randomMetricType() }}"
-            value: "{{ $randomNumber(10, 100) }}"
-            recorded_at: "{{ now() }}"
+            service_id: "{{ serviceId }}"
+            cpu_usage: "{{ cpuUsage }}"
+            memory_usage: "{{ memoryUsage }}"
+            load_avg: "{{ loadAvg }}"
+            disk_usage: "{{ diskUsage }}"
+            network_rx: "{{ networkRx }}"
+            network_tx: "{{ networkTx }}"
+            gpu_usage: "{{ gpuUsage }}"
           capture:
-            - json: "$.metric.id"
+            - json: "$.id"
               as: "metricId"
-          expect:
-            - statusCode: 201
+      - think: 0.1
+
+  - name: "Create process metrics"
+    weight: 30
+    flow:
+      - function: "generateProcessData"
+      - post:
+          url: "/api/metrics/process"
+          json:
+            service_id: "{{ serviceId }}"
+            process_name: "{{ processName }}"
+            pid: "{{ pid }}"
+            cpu_usage: "{{ cpuUsage }}"
+            memory_usage: "{{ memoryUsage }}"
+          capture:
+            - json: "$.id"
+              as: "processMetricId"
+      - think: 0.1

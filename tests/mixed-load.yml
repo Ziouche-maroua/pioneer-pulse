@@ -1,32 +1,56 @@
-
 config:
-  target: "http://localhost:3000"
+  target: "http://localhost:3000" # Load balancer or combined API
   phases:
-    - duration: 120
-      arrivalRate: 100
-      name: "Realistic mixed traffic - 100 req/sec"
     - duration: 60
+      arrivalRate: 100
+      name: "Realistic traffic pattern"
+    - duration: 120
       arrivalRate: 200
-      name: "Peak hours - 200 req/sec"
+      name: "Business hours"
+    - duration: 60
+      arrivalRate: 50
+      name: "Wind down"
+  processor: "./helpers.js"
 
 scenarios:
-  # 90% reads
-  - name: "Read operations"
-    weight: 90
+  # 90% READ operations
+  - name: "Read dashboard"
+    weight: 40
     flow:
       - get:
-          url: "http://localhost:3001/api/queries/dashboard"
-      - think: 0.5
-      - get:
-          url: "http://localhost:3001/api/queries/services/{{ $randomNumber(1, 5) }}/metrics"
-  
-  # 10% writes
-  - name: "Write operations"
-    weight: 10
+          url: "/api/metrics/latest"
+
+  - name: "Read service list"
+    weight: 30
     flow:
+      - get:
+          url: "/api/services"
+
+  - name: "Read hourly data"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/metrics/hourly"
+
+  # 10% WRITE operations
+  - name: "Write system metric"
+    weight: 7
+    flow:
+      - function: "generateMetricData"
       - post:
-          url: "http://localhost:3000/api/commands/metrics"
+          url: "/api/metrics/system"
           json:
-            service_id: "{{ $randomNumber(1, 5) }}"
-            metric_type: "{{ $randomString(5) }}"
-            value: "{{ $randomNumber(10, 100) }}"
+            service_id: "{{ serviceId }}"
+            cpu_usage: "{{ cpuUsage }}"
+            memory_usage: "{{ memoryUsage }}"
+
+  - name: "Write process metric"
+    weight: 3
+    flow:
+      - function: "generateProcessData"
+      - post:
+          url: "/api/metrics/process"
+          json:
+            service_id: "{{ serviceId }}"
+            process_name: "{{ processName }}"
+            cpu_usage: "{{ cpuUsage }}"
