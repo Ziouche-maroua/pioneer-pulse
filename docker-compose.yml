@@ -37,7 +37,7 @@ services:
       timeout: 5s
       retries: 5
   query-service:
-    build: ./query-service
+    build: ./backend/src/query-service
     container_name: pioneerpulse-query-service
     restart: unless-stopped
     ports:
