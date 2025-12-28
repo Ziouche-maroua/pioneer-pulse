@@ -17,7 +17,7 @@ export interface ProfileData {
   avatar: string;
 }
 
-export interface ActivityStatus {
+export interface ServiceStatus {
   currentLoad: number;
   timeToFullCharge: string;
   batteryHealth: number;
@@ -80,7 +80,7 @@ export const mockData = {
     totalSales: { value: "$173,000", change: "8%", changeType: "positive" as const },
   },
   profile: {
-    name: "Pichou_dev",
+    name: "Picv",
     email: "exemple@gmail.com",
     bio: "Hi, I'm Pichou_Dev. Decisions: If you can't decide, the answer is no. If two equally difficult paths, choose the one more painful in the short term (pain avoidance is creating an illusion of equality).",
     fullName: "Pichou_Dev",
@@ -93,7 +93,7 @@ export const mockData = {
     },
     avatar: "/placeholder.svg",
   },
-  activityStatus: {
+  ServiceStatus: {
     currentLoad: 68,
     timeToFullCharge: "0h 58 min",
     batteryHealth: 76,
@@ -174,9 +174,9 @@ export const api = {
     await delay(100);
     return mockData.profile;
   },
-  getActivityStatus: async (): Promise<ActivityStatus> => {
+  getServiceStatus: async (): Promise<ServiceStatus> => {
     await delay(100);
-    return mockData.activityStatus;
+    return mockData.ServiceStatus;
   },
  
   getProcesses: async (): Promise<Process[]> => {

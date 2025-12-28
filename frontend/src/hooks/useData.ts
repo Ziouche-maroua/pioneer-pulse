@@ -15,10 +15,10 @@ export const useProfile = () => {
   });
 };
 
-export const useActivityStatus = () => {
+export const useServiceStatus = () => {
   return useQuery({
-    queryKey: ["activityStatus"],
-    queryFn: api.getActivityStatus,
+    queryKey: ["serviceStatus"],
+    queryFn: api.getServiceStatus,
   });
 };
 

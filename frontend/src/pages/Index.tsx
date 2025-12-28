@@ -2,14 +2,13 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/dashboard/Header";
 import StatsCard from "@/components/dashboard/StatsCard";
 import WelcomeCard from "@/components/dashboard/WelcomeCard";
-import SatisfactionCard from "@/components/dashboard/SatisfactionCard";
-import ReferralCard from "@/components/dashboard/ReferralCard";
 import CPUGraph from "@/components/dashboard/CPUGraph";
 import MemoryGraph from "@/components/dashboard/MemoryGraph";
 import ProcessesTable from "@/components/dashboard/ProcessesTable";
 import { Wallet, Users, FileText, TrendingUp, BellElectric, Power, MemoryStick, Save, DatabaseIcon, Network, Cpu, GitGraphIcon, BellElectricIcon, CpuIcon, NetworkIcon } from "lucide-react";
 import jellyfishBg from "@/assets/jellyfish-bg.jpg";
 import { useStats } from "@/hooks/useData";
+import ServiceStatusCard from "@/components/profile/ActivityStatusCard";
 
 const Index = () => {
   const { data: stats, isLoading } = useStats();
@@ -91,10 +90,7 @@ const Index = () => {
         {/* Welcome + Satisfaction + Referral Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           <WelcomeCard />
-          <SatisfactionCard />
-          <div className="relative">
-            <ReferralCard />
-          </div>
+          <ServiceStatusCard />
         </div>
 
         {/* Charts Row */}
