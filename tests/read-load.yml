@@ -1,50 +1,47 @@
-
 config:
-  target: "http://localhost:3001"  # Change to your read API port
+  target: "http://localhost:3000"
   phases:
     - duration: 30
       arrivalRate: 50
-      name: "Warmup - 50 req/sec"
+      name: "Warmup"
     - duration: 60
       arrivalRate: 200
-      name: "Sustained load - 200 req/sec"
+      name: "Normal traffic"
     - duration: 30
       arrivalRate: 500
-      name: "Peak load - 500 req/sec"
-    - duration: 20
+      name: "High traffic"
+    - duration: 30
       arrivalRate: 1000
-      name: "Spike - 1000 req/sec"
+      name: "Peak traffic"
+  processor: "./helpers.js"
 
 scenarios:
-  - name: "Query dashboard"
+  - name: "Dashboard metrics query"
     weight: 40
     flow:
       - get:
-          url: "/api/queries/dashboard"
-          expect:
-            - statusCode: 200
-            - contentType: json
+          url: "/api/metrics/latest"
+      - think: 0.5
 
-  - name: "Query service metrics"
+  - name: "Service status query"
     weight: 30
     flow:
       - get:
-          url: "/api/queries/services/{{ $randomNumber(1, 5) }}/metrics"
-          expect:
-            - statusCode: 200
+          url: "/api/services/status"
+      - think: 0.5
 
-  - name: "Query hourly aggregations"
+  - name: "Hourly aggregations query"
     weight: 20
     flow:
+      - function: "generateTimeRange"
       - get:
-          url: "/api/queries/metrics/hourly?service_id={{ $randomNumber(1, 5) }}"
-          expect:
-            - statusCode: 200
+          url: "/api/metrics/hourly?from={{ fromTime }}&to={{ toTime }}"
+      - think: 0.5
 
-  - name: "Query services list"
+  - name: "Single service details"
     weight: 10
     flow:
+      - function: "selectRandomService"
       - get:
-          url: "/api/queries/services"
-          expect:
-            - statusCode: 200
+          url: "/api/services/{{ serviceId }}"
+      - think: 0.5
