@@ -18,7 +18,7 @@ const CPUGraph = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-foreground font-semibold">CPU Graph</h3>
-          <p className="text-muted-foreground text-xs">{stats?.changePercent} than last week</p>
+        
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-primary" />
@@ -65,24 +65,7 @@ const CPUGraph = () => {
         </ResponsiveContainer>
       </div>
 
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-        <div className="text-center">
-          <p className="text-foreground font-bold">{stats?.users}</p>
-          <p className="text-muted-foreground text-xs">Users</p>
-        </div>
-        <div className="text-center">
-          <p className="text-foreground font-bold">{stats?.clicks}</p>
-          <p className="text-muted-foreground text-xs">Clicks</p>
-        </div>
-        <div className="text-center">
-          <p className="text-foreground font-bold">{stats?.sales}</p>
-          <p className="text-muted-foreground text-xs">Sales</p>
-        </div>
-        <div className="text-center">
-          <p className="text-foreground font-bold">{stats?.items}</p>
-          <p className="text-muted-foreground text-xs">Items</p>
-        </div>
-      </div>
+     
     </div>
   );
 };

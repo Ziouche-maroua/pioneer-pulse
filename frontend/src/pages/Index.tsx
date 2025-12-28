@@ -2,15 +2,13 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/dashboard/Header";
 import StatsCard from "@/components/dashboard/StatsCard";
 import WelcomeCard from "@/components/dashboard/WelcomeCard";
-import SatisfactionCard from "@/components/dashboard/SatisfactionCard";
-import ReferralCard from "@/components/dashboard/ReferralCard";
 import CPUGraph from "@/components/dashboard/CPUGraph";
 import MemoryGraph from "@/components/dashboard/MemoryGraph";
-import ProjectsTable from "@/components/dashboard/ProjectsTable";
-import OrdersOverview from "@/components/dashboard/OrdersOverview";
-import { Wallet, Users, FileText, TrendingUp } from "lucide-react";
+import ProcessesTable from "@/components/dashboard/ProcessesTable";
+import { Wallet, Users, FileText, TrendingUp, BellElectric, Power, MemoryStick, Save, DatabaseIcon, Network, Cpu, GitGraphIcon, BellElectricIcon, CpuIcon, NetworkIcon } from "lucide-react";
 import jellyfishBg from "@/assets/jellyfish-bg.jpg";
 import { useStats } from "@/hooks/useData";
+import ServiceStatusCard from "@/components/profile/ActivityStatusCard";
 
 const Index = () => {
   const { data: stats, isLoading } = useStats();
@@ -48,33 +46,43 @@ const Index = () => {
           ) : (
             <>
               <StatsCard
-                title="Today's Money"
+                title="CPU Usage"
                 value={stats?.todaysMoney.value || "$0"}
-                change={stats?.todaysMoney.change || "0%"}
-                changeType={stats?.todaysMoney.changeType || "positive"}
-                icon={Wallet}
+                
+                icon={Cpu}
               />
               <StatsCard
-                title="Today's Users"
+                title="Memory usage"
                 value={stats?.todaysUsers.value || "0"}
-                change={stats?.todaysUsers.change || "0%"}
-                changeType={stats?.todaysUsers.changeType || "positive"}
-                icon={Users}
+
+                icon={MemoryStick}
               />
               <StatsCard
-                title="New Clients"
+                title="Disk usage"
                 value={stats?.newClients.value || "0"}
-                change={stats?.newClients.change || "0%"}
-                changeType={stats?.newClients.changeType || "positive"}
-                icon={FileText}
+      
+                icon={DatabaseIcon}
               />
               <StatsCard
-                title="Total Sales"
+                title="GPU usage"
                 value={stats?.totalSales.value || "$0"}
-                change={stats?.totalSales.change || "0%"}
-                changeType={stats?.totalSales.changeType || "positive"}
-                icon={TrendingUp}
+              
+                icon={CpuIcon}
               />
+
+              <StatsCard
+                title="Network tx"
+                value={stats?.totalSales.value || "$0"}
+        
+                icon={Network}
+              />
+              <StatsCard
+                title="Network rx"
+                value={stats?.totalSales.value || "$0"}
+        
+                icon={NetworkIcon}
+              />
+              
             </>
           )}
         </div>
@@ -82,10 +90,7 @@ const Index = () => {
         {/* Welcome + Satisfaction + Referral Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           <WelcomeCard />
-          <SatisfactionCard />
-          <div className="relative">
-            <ReferralCard />
-          </div>
+          <ServiceStatusCard />
         </div>
 
         {/* Charts Row */}
@@ -95,15 +100,8 @@ const Index = () => {
           </div>
           <MemoryGraph />
         </div>
-
-        {/* Projects + Orders Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <ProjectsTable />
-          </div>
-          <OrdersOverview />
-        </div>
-
+          <ProcessesTable />
+        
         {/* Footer */}
         <footer className="mt-8 flex items-center justify-between text-xs text-muted-foreground">
           <p>© 2025, Made with ❤️ by Pioneer Team</p>

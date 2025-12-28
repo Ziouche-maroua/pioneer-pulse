@@ -15,24 +15,18 @@ export const useProfile = () => {
   });
 };
 
-export const useActivityStatus = () => {
+export const useServiceStatus = () => {
   return useQuery({
-    queryKey: ["activityStatus"],
-    queryFn: api.getActivityStatus,
+    queryKey: ["serviceStatus"],
+    queryFn: api.getServiceStatus,
   });
 };
 
-export const useProjects = () => {
-  return useQuery({
-    queryKey: ["projects"],
-    queryFn: api.getProjects,
-  });
-};
 
-export const useOrders = () => {
+export const useProcesses = () => {
   return useQuery({
-    queryKey: ["orders"],
-    queryFn: api.getOrders,
+    queryKey: ["processes"],
+    queryFn: api.getProcesses,
   });
 };
 
