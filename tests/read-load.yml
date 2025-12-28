@@ -1,0 +1,47 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 50
+      name: "Warmup"
+    - duration: 60
+      arrivalRate: 200
+      name: "Normal traffic"
+    - duration: 30
+      arrivalRate: 500
+      name: "High traffic"
+    - duration: 30
+      arrivalRate: 1000
+      name: "Peak traffic"
+  processor: "./helpers.js"
+
+scenarios:
+  - name: "Dashboard metrics query"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/metrics/latest"
+      - think: 0.5
+
+  - name: "Service status query"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/services/status"
+      - think: 0.5
+
+  - name: "Hourly aggregations query"
+    weight: 20
+    flow:
+      - function: "generateTimeRange"
+      - get:
+          url: "/api/metrics/hourly?from={{ fromTime }}&to={{ toTime }}"
+      - think: 0.5
+
+  - name: "Single service details"
+    weight: 10
+    flow:
+      - function: "selectRandomService"
+      - get:
+          url: "/api/services/{{ serviceId }}"
+      - think: 0.5

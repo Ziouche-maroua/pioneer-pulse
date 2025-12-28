@@ -3,3 +3,9 @@ node_modules/
 *.log
 .DS_Store
 postgres-data/
+replication-service/node_modules/
+scripts/node_modules/
+replication-service/.env
+scripts/.env
+.vscode/
+.idea/ 
