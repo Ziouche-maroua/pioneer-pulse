@@ -37,38 +37,49 @@ export interface Process {
   created_at: string;
 }
 
-export interface CpuGraphData {
+// Backend data interfaces (what your backend actually returns)
+interface BackendDashboard {
+  services: {
+    total_services: number;
+    active_services: number;
+    inactive_services: number;
+  };
+  metrics: {
+    avg_cpu: number;
+    avg_memory: number;
+    avg_disk: number;
+    total_alerts: number;
+  };
+  system_health: {
+    status: string;
+    uptime: number;
+  };
+}
+
+interface BackendService {
+  id: number;
   name: string;
-  value: number;
+  hostname: string;
+  os: string;
+  status: string;
+  last_heartbeat: string;
 }
 
-export interface MemoryGraphData {
-  name: string;
-  value: number;
+interface BackendMetric {
+  timestamp: string;
+  cpu_usage: number;
+  memory_usage: number;
+  disk_usage: number;
+  network_rx: number;
+  network_tx: number;
 }
 
-export interface WelcomeData {
-  userName: string;
-  greeting: string;
-}
-
-export interface SatisfactionData {
-  percentage: number;
-  label: string;
-}
-
-export interface ReferralData {
-  invited: number;
-  bonus: number;
-  totalScore: number;
-}
-
-export interface CpuStats {
-  users: string;
-  clicks: string;
-  sales: string;
-  items: string;
-  changePercent: string;
+interface BackendHourlyMetric {
+  hour: string;
+  avg_cpu: number;
+  avg_memory: number;
+  max_cpu: number;
+  max_memory: number;
 }
 
 // Mock data store - simulates API responses
@@ -156,12 +167,7 @@ export const mockData = {
   },
 };
 
-// Simulated API delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// API service - replace these URLs with your actual endpoints
-const API_BASE_URL = "/api"; // Change this to your backend URL
-
+// Real API Implementation
 export const api = {
   // When backend is ready, replace the mock returns with actual fetch calls
   // Example: return fetch(`${API_BASE_URL}/stats`).then(res => res.json());

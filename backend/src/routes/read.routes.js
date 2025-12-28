@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const metricsController = require('../controllers/metricsController');
+const metricsController = require('../query-service/metricsController');
 
 // Service routes
 router.get('/services', metricsController.getServices);

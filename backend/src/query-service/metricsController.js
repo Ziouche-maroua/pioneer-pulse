@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require('../db/read.js');
 
 // GET /api/services - Liste tous les services
 exports.getServices = async (req, res) => {

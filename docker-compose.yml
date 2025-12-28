@@ -13,52 +13,105 @@ services:
       - write-data:/var/lib/postgresql/data
       - ./database/init/01-write-schema.sql:/docker-entrypoint-initdb.d/01-init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U writeuser -d pioneerpulse_write"]
+      test: ["CMD-SHELL", "pg_isready -U writeuser"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - pioneerpulse-network
 
-
-  backend:
-    build: ./backend
+  read-db:
+    image: postgres:15-alpine
+    container_name: pioneerpulse-read-db
+    restart: unless-stopped
     environment:
-      PORT: 3000
-      WRITE_DB_HOST: write-db
-      WRITE_DB_PORT: 5432
-      WRITE_DB_USER: writeuser
-      WRITE_DB_PASSWORD: writepass
-      WRITE_DB_NAME: pioneerpulse_write
+      POSTGRES_USER: readuser
+      POSTGRES_PASSWORD: readpass
+      POSTGRES_DB: pioneerpulse_read
     ports:
       - "5434:5432"
     volumes:
       - read-data:/var/lib/postgresql/data
       - ./database/init/02-read-schema.sql:/docker-entrypoint-initdb.d/02-init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U readuser -d pioneerpulse_read"]
+      test: ["CMD-SHELL", "pg_isready -U readuser"]
       interval: 5s
       timeout: 5s
       retries: 5
-  query-service:
-    build: ./backend/src/query-service
-    container_name: pioneerpulse-query-service
+    networks:
+      - pioneerpulse-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pioneerpulse-backend
     restart: unless-stopped
-    ports:
-      - "3001:3001"
     environment:
-      PORT: 3001
+      WRITE_DB_HOST: write-db
+      WRITE_DB_PORT: 5432
+      WRITE_DB_USER: writeuser
+      WRITE_DB_PASSWORD: writepass
+      WRITE_DB_NAME: pioneerpulse_write
+      READ_DB_HOST: read-db
+      READ_DB_PORT: 5432
+      READ_DB_USER: readuser
+      READ_DB_PASSWORD: readpass
+      READ_DB_NAME: pioneerpulse_read
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      write-db:
+        condition: service_healthy
+      read-db:
+        condition: service_healthy
+    networks:
+      - pioneerpulse-network
+
+  producer:
+    build:
+      context: ./producer
+      dockerfile: Dockerfile
+    container_name: pioneerpulse-producer
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:3000
+      SERVICE_NAME: my-producer-service
+    depends_on:
+      - backend
+    networks:
+      - pioneerpulse-network
+
+  replication:
+    build:
+      context: ./replication-service
+      dockerfile: Dockerfile
+    container_name: pioneerpulse-replication
+    restart: unless-stopped
+    environment:
+      WRITE_DB_HOST: write-db
+      WRITE_DB_PORT: 5432
+      WRITE_DB_USER: writeuser
+      WRITE_DB_PASSWORD: writepass
+      WRITE_DB_NAME: pioneerpulse_write
       READ_DB_HOST: read-db
       READ_DB_PORT: 5432
       READ_DB_USER: readuser
       READ_DB_PASSWORD: readpass
       READ_DB_NAME: pioneerpulse_read
     depends_on:
+      write-db:
+        condition: service_healthy
       read-db:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+    networks:
+      - pioneerpulse-network
+
 volumes:
   write-data:
+  read-data:
 
+networks:
+  pioneerpulse-network:
+    driver: bridge
