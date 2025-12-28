@@ -58,6 +58,8 @@ Modern systems generate massive amounts of operational data (metrics, logs, even
 
 ### What is CQRS?
 
+you will find here a detailed article that we wrote about cqrs : [article](https://medium.com/@maya.l.abeille.3570/cqrs-read-write-splitting-52b93cab0bdd)
+
 **CQRS (Command Query Responsibility Segregation)** is an architectural design pattern that separates **read** and **write** operations into **distinct models**.
 
 Instead of using a single model for all responsibilities, CQRS divides the system into two parts:
