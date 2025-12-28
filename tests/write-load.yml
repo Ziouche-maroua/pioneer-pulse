@@ -1,0 +1,54 @@
+config:
+  target: "http://localhost:3000" 
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Warmup"
+    - duration: 60
+      arrivalRate: 50
+      name: "Sustained load"
+    - duration: 30
+      arrivalRate: 100
+      name: "Peak load"
+    - duration: 30
+      arrivalRate: 200
+      name: "Stress test"
+  processor: "./helpers.js"
+  
+scenarios:
+  - name: "Create system metrics"
+    weight: 70
+    flow:
+      - function: "generateMetricData"
+      - post:
+          url: "/api/metrics/system"
+          json:
+            service_id: "{{ serviceId }}"
+            cpu_usage: "{{ cpuUsage }}"
+            memory_usage: "{{ memoryUsage }}"
+            load_avg: "{{ loadAvg }}"
+            disk_usage: "{{ diskUsage }}"
+            network_rx: "{{ networkRx }}"
+            network_tx: "{{ networkTx }}"
+            gpu_usage: "{{ gpuUsage }}"
+          capture:
+            - json: "$.id"
+              as: "metricId"
+      - think: 0.1
+
+  - name: "Create process metrics"
+    weight: 30
+    flow:
+      - function: "generateProcessData"
+      - post:
+          url: "/api/metrics/process"
+          json:
+            service_id: "{{ serviceId }}"
+            process_name: "{{ processName }}"
+            pid: "{{ pid }}"
+            cpu_usage: "{{ cpuUsage }}"
+            memory_usage: "{{ memoryUsage }}"
+          capture:
+            - json: "$.id"
+              as: "processMetricId"
+      - think: 0.1

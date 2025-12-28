@@ -1,0 +1,56 @@
+config:
+  target: "http://localhost:3000" # Load balancer or combined API
+  phases:
+    - duration: 60
+      arrivalRate: 100
+      name: "Realistic traffic pattern"
+    - duration: 120
+      arrivalRate: 200
+      name: "Business hours"
+    - duration: 60
+      arrivalRate: 50
+      name: "Wind down"
+  processor: "./helpers.js"
+
+scenarios:
+  # 90% READ operations
+  - name: "Read dashboard"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/metrics/latest"
+
+  - name: "Read service list"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/services"
+
+  - name: "Read hourly data"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/metrics/hourly"
+
+  # 10% WRITE operations
+  - name: "Write system metric"
+    weight: 7
+    flow:
+      - function: "generateMetricData"
+      - post:
+          url: "/api/metrics/system"
+          json:
+            service_id: "{{ serviceId }}"
+            cpu_usage: "{{ cpuUsage }}"
+            memory_usage: "{{ memoryUsage }}"
+
+  - name: "Write process metric"
+    weight: 3
+    flow:
+      - function: "generateProcessData"
+      - post:
+          url: "/api/metrics/process"
+          json:
+            service_id: "{{ serviceId }}"
+            process_name: "{{ processName }}"
+            cpu_usage: "{{ cpuUsage }}"
