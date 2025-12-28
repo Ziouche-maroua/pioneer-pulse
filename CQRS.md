@@ -245,6 +245,57 @@ Security = mandatory.
 
 ## Architecture Diagram : 
 
+             ┌──────────────┐
+             │ Client / UI  │
+             └───────┬──────┘
+                     │
+                     ▼
+              ┌──────────────┐
+              │ Command API  │
+              └───────┬──────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │ Command      │
+              │ Handler      │
+              └───────┬──────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │ Domain Logic │
+              └───────┬──────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │ Write DB     │
+              └───────┬──────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │ Domain Event │
+              │ Bus / Queue  │
+              └───────┬──────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │ Projection / │
+              │ Event Handler│
+              └───────┬──────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │ Read DB      │
+              └───────┬──────┘
+                      │
+                      ▼
+              ┌──────────────┐
+              │ Query API    │
+              └───────┬──────┘
+                      │
+                      ▼
+             ┌──────────────┐
+             │ Client / UI  │
+             └──────────────┘
 
 
 
@@ -253,14 +304,29 @@ Security = mandatory.
 If building a CQRS app:
 
 1️- Define domain.
+
 2️- Separate read vs write APIs.
+
 3️- Implement command handlers.
+
 4️- Add validation + business rules.
+
 5️- Emit events.
+
 6️- Build read projections.
+
 7️- Handle consistency.
+
 8️- Add monitoring.
+
 9️- Load test & scale. 
 
 ## When NOT to Use CQRS :
 
+
+- Simple CRUD apps.
+- Systems requiring immediate strong consistency.
+- Early MVPs / prototypes.
+- Teams without architecture discipline.
+- Low traffic / small-scale systems.
+- Systems requiring very simple debugging.
