@@ -1,6 +1,6 @@
 import { LayoutDashboard, BarChart3, CreditCard, FolderKanban, User, LogIn, UserPlus, HelpCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 interface NavItem {
   icon: React.ElementType;
@@ -65,9 +65,14 @@ const Sidebar = () => {
             </div>
             <p className="text-foreground font-medium text-sm mb-1">Need help?</p>
             <p className="text-muted-foreground text-xs mb-3">Check documentation</p>
-            <button className="w-full py-2 rounded-lg gradient-coral text-primary-foreground text-xs font-medium transition-all hover:opacity-90">
-              Documentation
-            </button>
+            <a 
+  href="https://github.com/Ziouche-maroua/pioneer-pulse" 
+  target="_blank" 
+  rel="noopener noreferrer"
+  className="w-full p-3 rounded-lg gradient-coral text-primary-foreground text-xs font-medium transition-all hover:opacity-90"
+>
+  Documentation
+</a>
           </div>
         </div>
       </div>

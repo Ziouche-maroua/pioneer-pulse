@@ -1,35 +1,70 @@
-import { cn } from "@/lib/utils";
+
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatsCardProps {
   title: string;
   value: string;
-  change?: string;
-  changeType?: "positive" | "negative";
-  icon?: LucideIcon;
+  subtitle?: string;
+  icon: LucideIcon;
+  trend?: {
+    value: string;
+    isPositive: boolean;
+  };
+  className?: string;
 }
 
-const StatsCard = ({ title, value, change, changeType = "positive", icon: Icon }: StatsCardProps) => {
+/**
+ * StatsCard - Reusable card for displaying metrics
+ * 
+ * Usage:
+ * <StatsCard
+ *   title="CPU Usage"
+ *   value="45%"
+ *   subtitle="Across all services"
+ *   icon={Cpu}
+ *   trend={{ value: "5% increase", isPositive: false }}
+ * />
+ */
+const StatsCard = ({ 
+  title, 
+  value, 
+  subtitle, 
+  icon: Icon, 
+  trend,
+  className 
+}: StatsCardProps) => {
   return (
-    <div className="glass-card-hover p-5 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-muted-foreground text-sm mb-1">{title}</p>
-          <p className="text-foreground text-2xl font-bold">{value}</p>
-          {change && (
-            <p className={cn(
-              "text-xs mt-1 font-medium",
-              changeType === "positive" ? "text-teal" : "text-destructive"
-            )}>
-              {changeType === "positive" ? "+" : ""}{change}
-            </p>
-          )}
-        </div>
-        {Icon && (
-          <div className="w-12 h-12 rounded-xl gradient-coral flex items-center justify-center glow-coral">
-            <Icon className="w-6 h-6 text-primary-foreground" />
+    <div className={cn(
+      "glass-card-hover p-5 flex items-start justify-between group",
+      className
+    )}>
+      {/* Left side: Text content */}
+      <div className="flex-1">
+        <p className="text-xs text-muted-foreground mb-1">{title}</p>
+        <h3 className="text-2xl font-bold mb-1 group-hover:text-primary transition-colors">
+          {value}
+        </h3>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground/70">{subtitle}</p>
+        )}
+        {trend && (
+          <div className="mt-2 flex items-center gap-1">
+            <span
+              className={cn(
+                "text-xs font-medium",
+                trend.isPositive ? "text-green-500" : "text-red-500"
+              )}
+            >
+              {trend.isPositive ? "↑" : "↓"} {trend.value}
+            </span>
           </div>
         )}
+      </div>
+
+      {/* Right side: Icon */}
+      <div className="ml-4 p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+        <Icon className="h-6 w-6 text-primary" />
       </div>
     </div>
   );
