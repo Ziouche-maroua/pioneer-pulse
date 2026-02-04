@@ -1,26 +1,38 @@
-import { LayoutDashboard, BarChart3, CreditCard, FolderKanban, User, LogIn, UserPlus, HelpCircle, FileText } from "lucide-react";
+import { LayoutDashboard, User, LogOut, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavItem {
   icon: React.ElementType;
   label: string;
   href?: string;
   badge?: string;
+  onClick?: () => void;
+  variant?: 'default' | 'danger';
 }
-
-const navItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-];
-
-const accountItems: NavItem[] = [
-  { icon: User, label: "Profile", href: "/profile" },
-  { icon: LogIn, label: "Sign In", href: "/" },
-  { icon: UserPlus, label: "Sign Up", href:"/" },
-];
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  // Main navigation items
+  const navItems: NavItem[] = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  ];
+
+  // Account items (dynamic based on auth state)
+  const accountItems: NavItem[] = [
+    { icon: User, label: "Profile", href: "/profile" },
+    { 
+      icon: LogOut, 
+      label: "Logout", 
+      onClick: logout,
+      variant: 'danger'
+    },
+  ];
+
   return (
     <aside className="w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Logo */}
@@ -45,8 +57,15 @@ const Sidebar = () => {
         {/* Account Section */}
         <div className="mt-8">
           <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Account Pages
+            Account
           </p>
+          {/* User info */}
+          {user && (
+            <div className="px-3 py-2 mb-2">
+              <p className="text-xs text-muted-foreground">Logged in as</p>
+              <p className="text-sm font-medium text-foreground truncate">{user.username}</p>
+            </div>
+          )}
           <div className="space-y-1">
             {accountItems.map((item) => (
               <NavButton key={item.label} item={item} currentPath={location.pathname} />
@@ -66,13 +85,13 @@ const Sidebar = () => {
             <p className="text-foreground font-medium text-sm mb-1">Need help?</p>
             <p className="text-muted-foreground text-xs mb-3">Check documentation</p>
             <a 
-  href="https://github.com/Ziouche-maroua/pioneer-pulse" 
-  target="_blank" 
-  rel="noopener noreferrer"
-  className="w-full p-3 rounded-lg gradient-coral text-primary-foreground text-xs font-medium transition-all hover:opacity-90"
->
-  Documentation
-</a>
+              href="https://github.com/Ziouche-maroua/pioneer-pulse" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="block w-full p-3 rounded-lg gradient-coral text-primary-foreground text-xs font-medium transition-all hover:opacity-90 text-center"
+            >
+              Documentation
+            </a>
           </div>
         </div>
       </div>
@@ -84,9 +103,12 @@ const NavButton = ({ item, currentPath }: { item: NavItem; currentPath: string }
   const Icon = item.icon;
   const navigate = useNavigate();
   const isActive = item.href === currentPath;
+  const isDanger = item.variant === 'danger';
   
   const handleClick = () => {
-    if (item.href) {
+    if (item.onClick) {
+      item.onClick();
+    } else if (item.href) {
       navigate(item.href);
     }
   };
@@ -96,12 +118,18 @@ const NavButton = ({ item, currentPath }: { item: NavItem; currentPath: string }
       onClick={handleClick}
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-        isActive
+        isDanger
+          ? "text-red-500 hover:bg-red-500/10 hover:text-red-600"
+          : isActive
           ? "bg-sidebar-accent text-foreground"
           : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
       )}
     >
-      <Icon className={cn("w-5 h-5", isActive && "text-primary")} />
+      <Icon className={cn(
+        "w-5 h-5", 
+        isActive && !isDanger && "text-primary",
+        isDanger && "text-red-500"
+      )} />
       <span>{item.label}</span>
       {item.badge && (
         <span className="ml-auto px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs">

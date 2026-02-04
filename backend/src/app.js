@@ -1,12 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 
-// Routes WRITE (Member 1)
+
 const serviceRoutes = require("./routes/service.routes");
 const metricsRoutes = require("./routes/metrics.routes");
-const registerRoutes = require("./routes/register.routes");
+const authRoutes = require("./routes/auth.routes");
 
-// Routes READ (Toi) ← CHANGE ICI
 const readRoutes = require("./routes/read.routes");
 
 const app = express();
@@ -15,21 +14,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ========================================
-// WRITE SIDE ROUTES (Member 1)
-// ========================================
+
 app.use("/service", serviceRoutes);
 app.use("/metrics", metricsRoutes);
-app.use("/auth", registerRoutes);
+app.use("/api/auth", authRoutes);
 
-// ========================================
-// READ SIDE ROUTES (Toi)
-// ========================================
+
 app.use("/api/read", readRoutes);
 
-// ========================================
-// HEALTH CHECK
-// ========================================
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -38,9 +31,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ========================================
-// ERROR HANDLERS
-// ========================================
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,

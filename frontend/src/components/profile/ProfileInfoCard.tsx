@@ -1,10 +1,10 @@
-import { Phone, Mail, MapPin, Twitter, Facebook, Instagram } from "lucide-react";
-import { useProfile } from "@/hooks/useData";
+import { Mail, Calendar, User as UserIcon } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ProfileInfoCard = () => {
-  const { data: profile, isLoading } = useProfile();
+  const { user, isLoading } = useAuth();
 
-  if (isLoading || !profile) {
+  if (isLoading || !user) {
     return (
       <div className="glass-card p-6 animate-pulse">
         <div className="h-40 bg-muted rounded-lg" />
@@ -12,31 +12,45 @@ const ProfileInfoCard = () => {
     );
   }
 
+  // Format date
+  const joinedDate = new Date(user.created_at).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
   return (
     <div className="glass-card p-6 h-full">
       <h3 className="text-foreground font-semibold text-lg mb-4">Profile Information</h3>
       
       <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-        {profile.bio}
+        System administrator account for Pioneer Pulse monitoring platform.
       </p>
 
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <span className="text-muted-foreground text-sm w-24">Full Name:</span>
-          <span className="text-foreground text-sm">{profile.fullName}</span>
+          <UserIcon className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-xs text-muted-foreground">Username</p>
+            <p className="text-foreground text-sm font-medium">{user.username}</p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-muted-foreground text-sm w-24">Mobile:</span>
-          <span className="text-foreground text-sm">{profile.mobile}</span>
+          <Mail className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-xs text-muted-foreground">Email</p>
+            <p className="text-foreground text-sm font-medium">{user.email}</p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-muted-foreground text-sm w-24">Email:</span>
-          <span className="text-foreground text-sm">{profile.email}</span>
+          <Calendar className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-xs text-muted-foreground">Member Since</p>
+            <p className="text-foreground text-sm font-medium">{joinedDate}</p>
+          </div>
         </div>
-
-        
       </div>
     </div>
   );

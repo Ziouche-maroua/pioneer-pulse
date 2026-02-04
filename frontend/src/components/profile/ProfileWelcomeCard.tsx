@@ -1,6 +1,9 @@
+import { useAuth } from "@/contexts/AuthContext";
 import jellyfishBg from "@/assets/jellyfish-bg.jpg";
-
+import { Link } from "react-router-dom";
 const ProfileWelcomeCard = () => {
+  const { user } = useAuth();
+
   return (
     <div className="glass-card overflow-hidden relative h-full">
       {/* Background Image */}
@@ -13,13 +16,15 @@ const ProfileWelcomeCard = () => {
       {/* Content */}
       <div className="relative z-10 p-6 h-full flex flex-col justify-end">
         <h2 className="text-3xl font-bold text-foreground mb-2">Welcome back!</h2>
-        <p className="text-muted-foreground">Nice to see you, Pichou</p>
-        <a 
-          href="/dashboard" 
+        <p className="text-muted-foreground">
+          Nice to see you, {user?.username || "User"}
+        </p>
+        <Link 
+          to="/dashboard" 
           className="mt-4 text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"
         >
           Check your Dashboard →
-        </a>
+        </Link>
       </div>
     </div>
   );
