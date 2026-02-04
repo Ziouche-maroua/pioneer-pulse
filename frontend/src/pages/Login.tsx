@@ -1,15 +1,21 @@
+// ============================================================================
+// LOGIN PAGE - Real authentication integrated with your beautiful design
+// ============================================================================
+
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, Loader2 } from "lucide-react";
 import jellyfishBg from "@/assets/jellyfish-bg.jpg";
 
 const Login = () => {
-  const navigate = useNavigate();
+  const { login, register, isLoading: authLoading } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,14 +23,51 @@ const Login = () => {
     confirmPassword: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Static auth - just navigate to dashboard
-    navigate("/dashboard");
+    setError("");
+    setIsLoading(true);
+
+    try {
+      if (isSignUp) {
+        // Validation for signup
+        if (!formData.name || !formData.email || !formData.password) {
+          throw new Error("Please fill in all fields");
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+
+        if (formData.password.length < 6) {
+          throw new Error("Password must be at least 6 characters");
+        }
+
+        // Register user
+        await register(formData.name, formData.email, formData.password);
+        // AuthContext handles redirect to dashboard
+        
+      } else {
+        // Validation for login
+        if (!formData.email || !formData.password) {
+          throw new Error("Please fill in all fields");
+        }
+
+        // Login user
+        await login(formData.email, formData.password);
+        // AuthContext handles redirect to dashboard
+      }
+    } catch (err: any) {
+      setError(err.message || (isSignUp ? "Registration failed" : "Login failed"));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
+    // Clear error when user starts typing
+    if (error) setError("");
   };
 
   return (
@@ -42,7 +85,7 @@ const Login = () => {
       <div className="glass-card p-8 w-full max-w-md relative z-10 animate-fade-in">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="text-2xl font-bold text-foreground">Vision UI</span>
+            <span className="text-2xl font-bold text-foreground">Pioneer Pulse</span>
           </div>
           <h1 className="text-xl font-semibold text-foreground mb-2">
             {isSignUp ? "Create Account" : "Welcome Back"}
@@ -54,6 +97,14 @@ const Login = () => {
           </p>
         </div>
 
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/50 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-500">{error}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           {isSignUp && (
             <div className="space-y-2">
@@ -63,10 +114,12 @@ const Login = () => {
                 <Input
                   id="name"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder="Maroua Zi"
                   value={formData.name}
                   onChange={handleInputChange}
+                  disabled={isLoading}
                   className="pl-10 bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-coral/50 focus:ring-coral/20"
+                  required={isSignUp}
                 />
               </div>
             </div>
@@ -82,7 +135,9 @@ const Login = () => {
                 placeholder="your@email.com"
                 value={formData.email}
                 onChange={handleInputChange}
+                disabled={isLoading}
                 className="pl-10 bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-coral/50 focus:ring-coral/20"
+                required
               />
             </div>
           </div>
@@ -97,12 +152,15 @@ const Login = () => {
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleInputChange}
+                disabled={isLoading}
                 className="pl-10 pr-10 bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-coral/50 focus:ring-coral/20"
+                required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                disabled={isLoading}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -120,7 +178,9 @@ const Login = () => {
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
+                  disabled={isLoading}
                   className="pl-10 pr-10 bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-coral/50 focus:ring-coral/20"
+                  required={isSignUp}
                 />
               </div>
             </div>
@@ -129,7 +189,11 @@ const Login = () => {
           {!isSignUp && (
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-border/50 bg-secondary/50 text-coral focus:ring-coral/20" />
+                <input 
+                  type="checkbox" 
+                  className="rounded border-border/50 bg-secondary/50 text-coral focus:ring-coral/20" 
+                  disabled={isLoading}
+                />
                 <span className="text-muted-foreground">Remember me</span>
               </label>
               <a href="#" className="text-coral hover:text-coral/80 transition-colors">Forgot password?</a>
@@ -138,7 +202,12 @@ const Login = () => {
 
           {isSignUp && (
             <label className="flex items-start gap-2 cursor-pointer text-sm">
-              <input type="checkbox" className="rounded border-border/50 bg-secondary/50 text-coral focus:ring-coral/20 mt-0.5" />
+              <input 
+                type="checkbox" 
+                className="rounded border-border/50 bg-secondary/50 text-coral focus:ring-coral/20 mt-0.5" 
+                disabled={isLoading}
+                required={isSignUp}
+              />
               <span className="text-muted-foreground">
                 I agree to the <a href="#" className="text-coral hover:text-coral/80">Terms of Service</a> and <a href="#" className="text-coral hover:text-coral/80">Privacy Policy</a>
               </span>
@@ -148,16 +217,29 @@ const Login = () => {
           <Button 
             type="submit" 
             className="w-full bg-gradient-to-r from-coral to-peach text-background font-semibold hover:opacity-90 transition-opacity"
+            disabled={isLoading || authLoading}
           >
-            {isSignUp ? "Sign Up" : "Sign In"}
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {isSignUp ? "Creating account..." : "Signing in..."}
+              </span>
+            ) : (
+              isSignUp ? "Sign Up" : "Sign In"
+            )}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
             {isSignUp ? "Already have an account? " : "Don't have an account? "}
             <button 
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError("");
+                setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+              }}
               className="text-coral hover:text-coral/80 transition-colors"
+              disabled={isLoading}
             >
               {isSignUp ? "Sign in" : "Sign up"}
             </button>

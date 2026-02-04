@@ -1,17 +1,16 @@
 import jellyfishBg from "@/assets/jellyfish-bg.jpg";
-import { useWelcome } from "@/hooks/useData";
-
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 const WelcomeCard = () => {
-  const { data: welcome, isLoading } = useWelcome();
+ const { user, isLoading } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
-      <div className="glass-card h-48 animate-pulse">
-        <div className="h-full bg-muted rounded-lg" />
+      <div className="glass-card p-6 animate-pulse">
+        <div className="h-40 bg-muted rounded-lg" />
       </div>
     );
   }
-
   return (
     <div 
       className="glass-card relative overflow-hidden h-48 animate-fade-in"
@@ -24,11 +23,11 @@ const WelcomeCard = () => {
       <div className="absolute inset-0 bg-gradient-to-r from-card/90 via-card/70 to-transparent" />
       <div className="relative z-10 p-6 h-full flex flex-col justify-center">
         <p className="text-muted-foreground text-sm mb-1">Welcome back,</p>
-        <h2 className="text-foreground text-2xl font-bold mb-1">{welcome?.userName}</h2>
-        <p className="text-muted-foreground text-sm">{welcome?.greeting}</p>
-        <button className="mt-4 text-sm text-primary hover:text-coral-light transition-colors font-medium">
+        <h2 className="text-foreground text-2xl font-bold mb-1">{user.username}</h2>
+       
+        <Link to="/profile" className="mt-4 text-sm text-primary hover:text-coral-light transition-colors font-medium">
           Tap to see profile →
-        </button>
+        </Link>
       </div>
     </div>
   );

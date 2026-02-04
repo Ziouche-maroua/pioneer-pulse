@@ -62,6 +62,115 @@ async function saveReplicationMetrics(lagSeconds) {
   }
 }
 
+
+async function updateDashboardSummary() {
+  try {
+    // Get service counts
+    const serviceCounts = await readDB.query(`
+      SELECT 
+        COUNT(*)::integer as total,
+        COUNT(*) FILTER (WHERE status = 'active')::integer as active,
+        COUNT(*) FILTER (WHERE status != 'active')::integer as inactive
+      FROM services_status_view
+    `);
+
+    // Get alert counts
+    const alertCounts = await readDB.query(`
+      SELECT 
+        COUNT(*) FILTER (WHERE severity = 'critical' AND resolved = false)::integer as critical,
+        COUNT(*) FILTER (WHERE severity = 'warning' AND resolved = false)::integer as warning
+      FROM alert_triggers_view
+    `);
+
+    // Get system-wide averages
+    const avgMetrics = await readDB.query(`
+      SELECT 
+        COALESCE(AVG(latest_cpu), 0) as avg_cpu,
+        COALESCE(AVG(latest_memory), 0) as avg_memory,
+        COALESCE(AVG(latest_disk), 0) as avg_disk
+      FROM services_status_view
+      WHERE status = 'active'
+    `);
+
+    // Get top CPU consumers
+    const topCpu = await readDB.query(`
+      WITH top_services AS (
+        SELECT service_id, name, latest_cpu
+        FROM services_status_view
+        WHERE latest_cpu IS NOT NULL
+        ORDER BY latest_cpu DESC
+        LIMIT 5
+      )
+      SELECT COALESCE(
+        jsonb_agg(
+          jsonb_build_object(
+            'service_id', service_id,
+            'name', name,
+            'cpu', latest_cpu
+          )
+        ),
+        '[]'::jsonb
+      ) as top_cpu
+      FROM top_services
+    `);
+
+    // Get top memory consumers
+    const topMemory = await readDB.query(`
+      WITH top_services AS (
+        SELECT service_id, name, latest_memory
+        FROM services_status_view
+        WHERE latest_memory IS NOT NULL
+        ORDER BY latest_memory DESC
+        LIMIT 5
+      )
+      SELECT COALESCE(
+        jsonb_agg(
+          jsonb_build_object(
+            'service_id', service_id,
+            'name', name,
+            'memory', latest_memory
+          )
+        ),
+        '[]'::jsonb
+      ) as top_memory
+      FROM top_services
+    `);
+
+    // Update dashboard summary
+await readDB.query(`
+  UPDATE dashboard_summary_view SET
+    total_services = $1,
+    active_services = $2,
+    inactive_services = $3,
+    critical_alerts = $4,
+    warning_alerts = $5,
+    avg_cpu_all_services = $6,
+    avg_memory_all_services = $7,
+    avg_disk_all_services = $8,
+    top_cpu_services = $9::jsonb,
+    top_memory_services = $10::jsonb,
+    updated_at = NOW()
+  WHERE id = 1
+`, [
+  serviceCounts.rows[0].total || 0,
+  serviceCounts.rows[0].active || 0,
+  serviceCounts.rows[0].inactive || 0,
+  alertCounts.rows[0].critical || 0,
+  alertCounts.rows[0].warning || 0,
+  Number(avgMetrics.rows[0].avg_cpu || 0),
+  Number(avgMetrics.rows[0].avg_memory || 0),
+  Number(avgMetrics.rows[0].avg_disk || 0),
+  JSON.stringify(topCpu.rows[0].top_cpu || []),
+  JSON.stringify(topMemory.rows[0].top_memory || [])
+]);
+
+
+    console.log('✅ Dashboard summary updated successfully');
+  } catch (err) {
+    console.error('❌ Failed to update dashboard summary:', err.message);
+  }
+}
+
 //i've added this function to determine service status based on cpu, memory, and last heartbeat
 function determineServiceStatus(cpu, memory, lastHeartbeat) {
   const now = new Date();
@@ -445,6 +554,16 @@ async function processPendingEvents() {
     if (metrics.currentBacklog > 0) {
       setImmediate(processPendingEvents);
     }
+
+    // Status reporting every 10 seconds
+setInterval(printStatus, 10000);
+
+// Update dashboard summary every 30 seconds
+setInterval(updateDashboardSummary, 30000);
+
+// Update immediately on start
+updateDashboardSummary();
+
   } catch (err) {
     console.error("Sync error:", err.message);
   }

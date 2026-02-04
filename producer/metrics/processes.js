@@ -4,8 +4,8 @@ async function getProcessMetrics() {
   const data = await si.processes();
 
   return data.list
-    .filter(p => p.cpu > 0.5)
-    .slice(0, 5)
+    .filter(p => p.cpu > 0.1)  //  Show processes using >0.1% CPU
+    .slice(0, 10)              //  Show top 10 instead of 5
     .map(p => ({
       pid: p.pid,
       name: p.name,
