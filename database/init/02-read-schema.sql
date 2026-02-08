@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS read_schema;
+SET search_path TO read_schema;
+
 CREATE TABLE IF NOT EXISTS services_status_view (
     service_id UUID PRIMARY KEY,
     name TEXT NOT NULL,

@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS write_schema;
+SET search_path TO write_schema;
+
 CREATE TABLE IF NOT EXISTS services (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL,
@@ -9,7 +12,7 @@ CREATE TABLE IF NOT EXISTS services (
 );
 
 
--- like an server based
+-- like a server based
 CREATE TABLE IF NOT EXISTS system_metrics (
      id SERIAL PRIMARY KEY,
     service_id UUID NOT NULL,

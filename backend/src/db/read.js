@@ -1,11 +1,12 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  host: process.env.READ_DB_HOST,
-  port: Number(process.env.READ_DB_PORT),
-  database: process.env.READ_DB_NAME,
-  user: process.env.READ_DB_USER,
-  password: process.env.READ_DB_PASSWORD,
+  host: process.env.DB_HOST,       
+  port: process.env.DB_PORT,        
+  user: process.env.DB_USER,        
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,    
+  options: '-c search_path=read_schema' 
 });
 
 pool.on('connect', () => {
